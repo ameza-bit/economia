@@ -15,7 +15,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Sonofy',
+      title: 'EconoMía',
       routerConfig: AppRoutes.getGoRoutes(navigatorKey),
       theme: MainTheme.lightTheme,
     );
