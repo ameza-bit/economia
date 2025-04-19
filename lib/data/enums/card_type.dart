@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum CardType { credit, debit, gift, other }
 
 extension CardTypeExtension on CardType {
@@ -39,6 +41,19 @@ extension CardTypeExtension on CardType {
         return 'assets/icons/gift_card.svg';
       case CardType.other:
         return 'assets/icons/other_card.svg';
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case CardType.credit:
+        return Colors.indigo.shade200;
+      case CardType.debit:
+        return Colors.teal.shade200;
+      case CardType.gift:
+        return Colors.amber.shade200;
+      case CardType.other:
+        return Colors.blueGrey.shade200;
     }
   }
 }

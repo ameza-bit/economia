@@ -1,4 +1,5 @@
 import 'package:economia/ui/screens/cards/card_form_screen.dart';
+import 'package:economia/ui/screens/cards/card_list_screen.dart';
 import 'package:economia/ui/screens/concepts/concept_form_screen.dart';
 import 'package:economia/ui/screens/concepts/concept_list_screen.dart';
 import 'package:flutter/material.dart';
@@ -19,9 +20,16 @@ class AppRoutes {
             builder: (context, state) => ConceptFormScreen(),
           ),
           GoRoute(
-            name: CardFormScreen.routeName,
-            path: CardFormScreen.routeName,
-            builder: (context, state) => CardFormScreen(),
+            name: CardListScreen.routeName,
+            path: CardListScreen.routeName,
+            builder: (context, state) => CardListScreen(),
+            routes: [
+              GoRoute(
+                name: CardFormScreen.routeName,
+                path: CardFormScreen.routeName,
+                builder: (context, state) => CardFormScreen(),
+              ),
+            ],
           ),
         ],
       ),

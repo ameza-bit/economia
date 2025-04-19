@@ -1,7 +1,7 @@
 import 'package:economia/data/blocs/concept_bloc.dart';
 import 'package:economia/data/events/concept_event.dart';
 import 'package:economia/data/repositories/concept_repository.dart';
-import 'package:economia/ui/screens/cards/card_form_screen.dart';
+import 'package:economia/ui/screens/cards/card_list_screen.dart';
 import 'package:economia/ui/screens/concepts/concept_form_screen.dart';
 import 'package:economia/ui/views/concepts/concept_list_view.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +15,18 @@ class ConceptListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Home'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Home'),
+        centerTitle: true,
+        actions: [
+          // Botón para ir a la lista de tarjetas
+          IconButton(
+            icon: const Icon(Icons.credit_card),
+            tooltip: 'Ver Tarjetas',
+            onPressed: () => context.goNamed(CardListScreen.routeName),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: BlocProvider(
@@ -26,25 +37,11 @@ class ConceptListScreen extends StatelessWidget {
           child: ConceptListView(),
         ),
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
-        spacing: 16,
-        children: [
-          FloatingActionButton(
-            key: const Key('add_card'),
-            heroTag: 'add_card',
-            child: const Icon(Icons.add_card_outlined),
-            onPressed: () => context.goNamed(CardFormScreen.routeName),
-          ),
-          FloatingActionButton(
-            key: const Key('add_concept'),
-            heroTag: 'add_concept',
-            child: const Icon(Icons.add_outlined),
-            onPressed: () => context.goNamed(ConceptFormScreen.routeName),
-          ),
-        ],
+      floatingActionButton: FloatingActionButton(
+        key: const Key('add_concept'),
+        heroTag: 'add_concept',
+        child: const Icon(Icons.add_outlined),
+        onPressed: () => context.goNamed(ConceptFormScreen.routeName),
       ),
     );
   }

@@ -96,21 +96,20 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
 
   void _onSave(CardFormSaveEvent event, Emitter<CardFormState> emit) async {
     if (state is CardFormReadyState) {
+      // IMPORTANTE: Guardar referencia al estado ANTES de emitir el nuevo estado
+      final currentState = state as CardFormReadyState;
+
       try {
-        emit(CardFormLoadingState());
-
-        final currentState = state as CardFormReadyState;
-
         // Validaciones básicas
         if (currentState.cardNumber.isEmpty) {
           emit(CardFormErrorState('Ingrese el número de tarjeta'));
-          emit(currentState);
+          emit(currentState); // Volver al estado anterior
           return;
         }
 
         if (currentState.bankName.isEmpty) {
           emit(CardFormErrorState('Ingrese el nombre del banco'));
-          emit(currentState);
+          emit(currentState); // Volver al estado anterior
           return;
         }
 
@@ -127,6 +126,9 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
           return;
         }
 
+        // Ahora emitimos el estado de carga
+        emit(CardFormLoadingState());
+
         // Generar un ID simple usando timestamp
         final id = DateTime.now().millisecondsSinceEpoch.toString();
 
@@ -136,10 +138,8 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
           cardNumber: int.parse(currentState.cardNumber),
           cardType: currentState.cardType,
           expirationDate: currentState.expirationDate,
-          paymentDay:
-              currentState.paymentDay, // Ahora es simplemente el día como int
-          cutOffDay:
-              currentState.cutOffDay, // Ahora es simplemente el día como int
+          paymentDay: currentState.paymentDay,
+          cutOffDay: currentState.cutOffDay,
           bankName: currentState.bankName,
         );
 
