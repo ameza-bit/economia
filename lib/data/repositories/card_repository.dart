@@ -4,7 +4,7 @@ import 'package:economia/core/services/preferences.dart';
 import 'package:economia/data/models/card.dart';
 
 class CardRepository {
-  final String _preferencesKey = 'concepts';
+  final String _preferencesKey = 'cards';
 
   List<Card> getCardsLocal() {
     try {
