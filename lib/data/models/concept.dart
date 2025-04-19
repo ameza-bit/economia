@@ -1,4 +1,5 @@
 import 'package:economia/data/enums/payment_mode.dart';
+import 'package:economia/data/models/financial_card.dart';
 
 class Concept {
   final int id;
@@ -6,6 +7,7 @@ class Concept {
   final String description;
   final String store;
   final double total;
+  final FinancialCard card;
   final PaymentMode paymentMode;
   final int months;
 
@@ -15,6 +17,7 @@ class Concept {
     this.description = '',
     this.store = 'Tienda',
     required this.total,
+    required this.card,
     this.paymentMode = PaymentMode.oneTime,
     this.months = 1,
   });
@@ -26,6 +29,7 @@ class Concept {
       description: json['description'] ?? '',
       store: json['store'] ?? 'Tienda',
       total: json['total'] ?? 0,
+      card: FinancialCard.fromJson(json['card'] ?? {}),
       paymentMode: PaymentMode.values[json['paymentMode'] ?? 0],
       months: json['months'] ?? 1,
     );
@@ -37,6 +41,7 @@ class Concept {
     'description': description,
     'store': store,
     'total': total,
+    'card': card.toJson(),
     'paymentMode': paymentMode.index,
     'months': months,
   };

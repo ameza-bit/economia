@@ -11,7 +11,6 @@ class CardItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return GeneralCard(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -25,7 +24,7 @@ class CardItem extends StatelessWidget {
           Row(
             children: [
               Icon(
-                Icons.account_balance,
+                Icons.account_balance_outlined,
                 color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(width: 8),
