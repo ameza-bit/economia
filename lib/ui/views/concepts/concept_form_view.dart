@@ -215,14 +215,26 @@ class _ConceptFormViewState extends State<ConceptFormView> {
                             );
                           }
 
-                          return DropdownButtonFormField<FinancialCard>(
+                          // Seleccionar la primera tarjeta por defecto si no hay ninguna seleccionada
+                          final FinancialCard? currentCard = state.selectedCard;
+
+                          // Buscar la tarjeta seleccionada en la lista usando el ID
+                          final FinancialCard selectedCard =
+                              currentCard != null
+                                  ? cardState.cards.firstWhere(
+                                    (card) => card.id == currentCard.id,
+                                    orElse: () => cardState.cards.first,
+                                  )
+                                  : cardState.cards.first;
+
+                          return DropdownButtonFormField<String>(
                             decoration: const InputDecoration(
                               labelText: 'Tarjeta *',
                               border: OutlineInputBorder(),
                               helperText:
                                   'Tarjeta con la que se realizará el pago',
                             ),
-                            value: state.selectedCard ?? cardState.cards.first,
+                            value: selectedCard.id,
                             items:
                                 cardState.cards.map((card) {
                                   String displayText =
@@ -230,15 +242,20 @@ class _ConceptFormViewState extends State<ConceptFormView> {
                                           ? '${card.alias} - ${card.bankName}'
                                           : '${card.bankName} - ****${card.cardNumber.toString().substring(card.cardNumber.toString().length - 4)}';
 
-                                  return DropdownMenuItem<FinancialCard>(
-                                    value: card,
+                                  return DropdownMenuItem<String>(
+                                    value: card.id,
                                     child: Text(displayText),
                                   );
                                 }).toList(),
-                            onChanged: (value) {
-                              if (value != null) {
+                            onChanged: (String? cardId) {
+                              if (cardId != null) {
+                                final selectedCard = cardState.cards.firstWhere(
+                                  (card) => card.id == cardId,
+                                );
                                 context.read<ConceptFormBloc>().add(
-                                  ConceptFormUpdateSelectedCardEvent(value),
+                                  ConceptFormUpdateSelectedCardEvent(
+                                    selectedCard,
+                                  ),
                                 );
                               }
                             },

@@ -30,14 +30,18 @@ class ConceptFormBloc extends Bloc<ConceptFormEvent, ConceptFormState> {
   }
 
   void _onInit(ConceptFormInitEvent event, Emitter<ConceptFormState> emit) {
-    // Obtener todas las tarjetas disponibles
-    final cards = cardRepository.getCardsLocal();
+    try {
+      // Obtener todas las tarjetas disponibles
+      final cards = cardRepository.getCardsLocal();
 
-    emit(
-      ConceptFormReadyState(
-        selectedCard: cards.isNotEmpty ? cards.first : null,
-      ),
-    );
+      if (cards.isEmpty) {
+        emit(ConceptFormReadyState(selectedCard: null));
+      } else {
+        emit(ConceptFormReadyState(selectedCard: cards.first));
+      }
+    } catch (e) {
+      emit(ConceptFormErrorState('Error al inicializar: $e'));
+    }
   }
 
   void _onUpdateName(
