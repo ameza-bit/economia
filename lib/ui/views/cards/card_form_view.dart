@@ -228,7 +228,7 @@ class _CardFormViewState extends State<CardFormView> {
             );
           }
         },
-        builder: (context, state) {
+        builder: (context, CardFormState state) {
           if (state is CardFormLoadingState) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -259,6 +259,12 @@ class _CardFormViewState extends State<CardFormView> {
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Por favor ingrese el número de tarjeta';
+                        } else if (value.length < 4) {
+                          return 'El número de tarjeta debe tener al menos 4 caracteres';
+                        } else if (value.length > 16) {
+                          return 'El número de tarjeta no puede tener más de 16 caracteres';
+                        } else if (!RegExp(r'^\d+$').hasMatch(value)) {
+                          return 'El número de tarjeta solo puede contener dígitos';
                         }
                         return null;
                       },
@@ -299,6 +305,8 @@ class _CardFormViewState extends State<CardFormView> {
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Por favor ingrese el nombre del banco';
+                        } else if (value.length < 3) {
+                          return 'El nombre del banco debe tener al menos 3 caracteres';
                         }
                         return null;
                       },
@@ -370,7 +378,9 @@ class _CardFormViewState extends State<CardFormView> {
                     ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          context.read<CardFormBloc>().add(CardFormSaveEvent());
+                          context.read<CardFormBloc>().add(
+                            CardFormSaveEvent(context: context),
+                          );
                         }
                       },
                       style: ElevatedButton.styleFrom(

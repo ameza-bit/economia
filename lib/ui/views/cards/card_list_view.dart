@@ -13,6 +13,7 @@ class CardListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<CardBloc, CardState>(
+      bloc: context.read<CardBloc>(),
       builder: (context, state) {
         switch (state) {
           case InitialCardState():

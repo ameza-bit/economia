@@ -1,4 +1,6 @@
 // lib/data/blocs/card_form_bloc.dart
+import 'package:economia/data/blocs/card_bloc.dart';
+import 'package:economia/data/events/card_event.dart';
 import 'package:economia/data/events/card_form_event.dart';
 import 'package:economia/data/models/financial_card.dart';
 import 'package:economia/data/repositories/card_repository.dart';
@@ -147,6 +149,13 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
         repository.addCardLocal(newCard);
 
         emit(CardFormSuccessState('Tarjeta guardada correctamente'));
+
+        if (event.context != null) {
+          BlocProvider.of<CardBloc>(
+            event.context!,
+            listen: false,
+          ).add(RefreshCardEvent());
+        }
       } catch (e) {
         emit(CardFormErrorState('Error al guardar la tarjeta: $e'));
       }
