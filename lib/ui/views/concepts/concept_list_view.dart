@@ -11,8 +11,7 @@ class ConceptListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder(
-      bloc: context.read<ConceptBloc>(),
+    return BlocBuilder<ConceptBloc, ConceptState>(
       builder: (BuildContext context, ConceptState state) {
         switch (state) {
           case InitialConceptState():

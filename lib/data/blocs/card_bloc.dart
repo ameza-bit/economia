@@ -8,7 +8,7 @@ class CardBloc extends Bloc<CardEvent, CardState> {
   CardRepository repository;
   List<FinancialCard> _cards = [];
 
-  CardBloc(this.repository) : super(InitialCardState()) {
+  CardBloc({required this.repository}) : super(InitialCardState()) {
     on<LoadCardEvent>(_onLoadCards);
     on<RefreshCardEvent>(_onRefreshCards);
   }

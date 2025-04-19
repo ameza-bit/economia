@@ -6,6 +6,7 @@ import 'package:economia/data/models/concept.dart';
 import 'package:economia/data/repositories/concept_repository.dart';
 import 'package:economia/data/repositories/card_repository.dart';
 import 'package:economia/data/states/concept_form_state.dart';
+import 'package:flutter/material.dart' show debugPrint;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ConceptFormBloc extends Bloc<ConceptFormEvent, ConceptFormState> {
@@ -229,12 +230,19 @@ class ConceptFormBloc extends Bloc<ConceptFormEvent, ConceptFormState> {
           emit(ConceptFormSuccessState('Concepto guardado correctamente'));
         }
 
-        // Refrescar la lista de conceptos
+        // Intentar refrescar la lista de conceptos si hay un contexto disponible
         if (event.context != null) {
-          BlocProvider.of<ConceptBloc>(
-            event.context!,
-            listen: false,
-          ).add(RefreshConceptEvent());
+          try {
+            // Verificar si existe un ConceptBloc antes de usarlo
+            BlocProvider.of<ConceptBloc>(
+              event.context!,
+              listen: false,
+            ).add(RefreshConceptEvent());
+          } catch (e) {
+            // Si no se puede acceder al ConceptBloc, simplemente continuamos
+            // El usuario verá el mensaje de éxito igualmente
+            debugPrint('No se pudo refrescar automáticamente: $e');
+          }
         }
       } catch (e) {
         emit(ConceptFormErrorState('Error al guardar el concepto: $e'));

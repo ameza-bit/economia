@@ -1,6 +1,8 @@
 import 'package:economia/data/blocs/card_bloc.dart';
+import 'package:economia/data/blocs/concept_bloc.dart';
 import 'package:economia/data/blocs/concept_form_bloc.dart';
 import 'package:economia/data/enums/payment_mode.dart';
+import 'package:economia/data/events/concept_event.dart';
 import 'package:economia/data/events/concept_form_event.dart';
 import 'package:economia/data/models/financial_card.dart';
 import 'package:economia/data/states/card_state.dart';
@@ -57,7 +59,24 @@ class _ConceptFormViewState extends State<ConceptFormView> {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message)));
+
+            // Cerrar la pantalla de formulario
             Navigator.pop(context);
+
+            // Intentar refrescar la lista después de volver a la pantalla principal
+            Future.delayed(Duration.zero, () {
+              try {
+                if (context.mounted) {
+                  BlocProvider.of<ConceptBloc>(
+                    context,
+                    listen: false,
+                  ).add(RefreshConceptEvent());
+                }
+              } catch (e) {
+                // Si fallara, no afecta la experiencia del usuario
+                debugPrint('Error al refrescar después de navegar: $e');
+              }
+            });
           } else if (state is ConceptFormErrorState) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -67,6 +86,7 @@ class _ConceptFormViewState extends State<ConceptFormView> {
             );
           }
         },
+
         builder: (context, state) {
           if (state is ConceptFormLoadingState) {
             return const Center(child: CircularProgressIndicator());
