@@ -1,10 +1,12 @@
-import 'package:economia/routes/app_routes.dart';
-import 'package:economia/themes/main_theme.dart';
+import 'package:economia/core/routes/app_routes.dart';
+import 'package:economia/core/services/preferences.dart';
+import 'package:economia/ui/themes/main_theme.dart';
 import 'package:flutter/material.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  Preferences.init();
 
   runApp(const MainApp());
 }
