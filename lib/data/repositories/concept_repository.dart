@@ -4,9 +4,11 @@ import 'package:economia/core/services/preferences.dart';
 import 'package:economia/data/models/concept.dart';
 
 class ConceptRepository {
+  final String _preferencesKey = 'concepts';
+
   List<Concept> getConceptsLocal() {
     try {
-      String json = Preferences.getString('ND_concepts');
+      String json = Preferences.getString(_preferencesKey);
       if (json.isNotEmpty) {
         List<dynamic> jsonList = jsonDecode(json);
         return jsonList.map((e) => Concept.fromJson(e)).toList();
@@ -19,7 +21,7 @@ class ConceptRepository {
 
   void saveConceptsLocal(List<Concept> concepts) {
     String json = jsonEncode(concepts);
-    Preferences.setString('ND_concepts', json);
+    Preferences.setString(_preferencesKey, json);
   }
 
   void addConceptLocal(Concept concept) {
@@ -47,6 +49,6 @@ class ConceptRepository {
   }
 
   void deleteAllConceptsLocal() {
-    Preferences.setString('ND_concepts', '');
+    Preferences.setString(_preferencesKey, '');
   }
 }

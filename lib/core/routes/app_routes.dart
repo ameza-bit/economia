@@ -1,3 +1,4 @@
+import 'package:economia/ui/screens/concepts/concept_form_screen.dart';
 import 'package:economia/ui/screens/concepts/concept_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +8,17 @@ class AppRoutes {
     GlobalKey<NavigatorState> navigatorKey,
   ) {
     List<RouteBase> routes = [
-      GoRoute(path: "/", builder: (context, state) => ConceptListScreen()),
+      GoRoute(
+        path: "/",
+        builder: (context, state) => ConceptListScreen(),
+        routes: [
+          GoRoute(
+            name: ConceptFormScreen.routeName,
+            path: ConceptFormScreen.routeName,
+            builder: (context, state) => ConceptFormScreen(),
+          ),
+        ],
+      ),
     ];
 
     return GoRouter(

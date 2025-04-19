@@ -13,50 +13,45 @@ class ConceptListView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder(
       bloc: context.read<ConceptBloc>(),
-      builder: (context, state) {
-        if (state is InitialConceptState) {
-          return Center(child: Text('Iniciando...'));
-        }
-
-        if (state is LoadingConceptState) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Cargando Conceptos...'),
-              ],
-            ),
-          );
-        }
-
-        if (state is ErrorConceptState) {
-          return EmptyState(
-            subtitle: state.message,
-            onRetry:
-                () => context.read<ConceptBloc>().add(RefreshConceptEvent()),
-          );
-        }
-
-        if (state is LoadedConceptState) {
-          if (state.concepts.isEmpty) {
-            // return Center(child: Text('No hay conceptos disponibles'));
+      builder: (BuildContext context, ConceptState state) {
+        switch (state) {
+          case InitialConceptState():
+            return Center(child: Text('Iniciando...'));
+          case LoadingConceptState():
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Cargando Conceptos...'),
+                ],
+              ),
+            );
+          case ErrorConceptState():
             return EmptyState(
-              subtitle: 'No hay conceptos disponibles',
+              subtitle: state.message,
               onRetry:
                   () => context.read<ConceptBloc>().add(RefreshConceptEvent()),
             );
-          }
+          case LoadedConceptState():
+            if (state.concepts.isEmpty) {
+              // return Center(child: Text('No hay conceptos disponibles'));
+              return EmptyState(
+                subtitle: 'No hay conceptos disponibles',
+                onRetry:
+                    () =>
+                        context.read<ConceptBloc>().add(RefreshConceptEvent()),
+              );
+            }
 
-          return ListView.builder(
-            itemCount: state.concepts.length,
-            itemBuilder:
-                (context, index) => ConceptCard(concept: state.concepts[index]),
-          );
+            return ListView.builder(
+              itemCount: state.concepts.length,
+              itemBuilder:
+                  (context, index) =>
+                      ConceptCard(concept: state.concepts[index]),
+            );
         }
-
-        return SizedBox.shrink();
       },
     );
   }

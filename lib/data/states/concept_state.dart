@@ -15,5 +15,3 @@ class ErrorConceptState extends ConceptState {
   final String message;
   ErrorConceptState(this.message);
 }
-
-class EmptyConceptState extends ConceptState {}

@@ -1,9 +1,11 @@
 import 'package:economia/data/blocs/concept_bloc.dart';
 import 'package:economia/data/events/concept_event.dart';
 import 'package:economia/data/repositories/concept_repository.dart';
+import 'package:economia/ui/screens/concepts/concept_form_screen.dart';
 import 'package:economia/ui/views/concepts/concept_list_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 class ConceptListScreen extends StatelessWidget {
   static const String routeName = 'concept_list';
@@ -25,7 +27,7 @@ class ConceptListScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add_outlined),
-        onPressed: () {},
+        onPressed: () => context.goNamed(ConceptFormScreen.routeName),
       ),
     );
   }
