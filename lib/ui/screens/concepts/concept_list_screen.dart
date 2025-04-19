@@ -22,7 +22,7 @@ class ConceptListScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: const Text('Economía'),
         centerTitle: true,
         actions: [
           // Botón para ir a la lista de tarjetas
@@ -31,10 +31,17 @@ class ConceptListScreen extends StatelessWidget {
             tooltip: 'Ver Tarjetas',
             onPressed: () => context.goNamed(CardListScreen.routeName),
           ),
+          // Botón de actualizar
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Actualizar',
+            onPressed:
+                () => context.read<ConceptBloc>().add(RefreshConceptEvent()),
+          ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16),
         child: ConceptListView(),
       ),
       floatingActionButton: FloatingActionButton(
