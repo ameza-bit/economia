@@ -1,4 +1,4 @@
-import 'package:economia/ui/screens/home_screen.dart';
+import 'package:economia/ui/screens/concept_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,7 +7,7 @@ class AppRoutes {
     GlobalKey<NavigatorState> navigatorKey,
   ) {
     List<RouteBase> routes = [
-      GoRoute(path: "/", builder: (context, state) => HomeScreen()),
+      GoRoute(path: "/", builder: (context, state) => ConceptListScreen()),
     ];
 
     return GoRouter(
