@@ -1,5 +1,5 @@
-// lib/ui/widgets/cards/card_item.dart
 import 'package:economia/data/enums/card_type.dart';
+import 'package:economia/data/enums/card_network.dart';
 import 'package:economia/data/models/financial_card.dart';
 import 'package:economia/ui/widgets/general/general_card.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +11,10 @@ class CardItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Verificar si es una tarjeta de crédito para mostrar días de pago/corte
+    final bool isCredit =
+        card.cardType == CardType.credit || card.cardType == CardType.other;
+
     return GeneralCard(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -20,7 +24,19 @@ class CardItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Información bancaria
+          // Alias de la tarjeta (si existe)
+          if (card.alias.isNotEmpty) ...[
+            Text(
+              card.alias,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+
+          // Información bancaria y tipo de tarjeta
           Row(
             children: [
               Icon(
@@ -29,10 +45,17 @@ class CardItem extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                card.bankName,
+                '${card.bankName} - ',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                card.cardNetwork.displayName,
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const Spacer(),
               Chip(
@@ -46,6 +69,20 @@ class CardItem extends StatelessWidget {
           ),
 
           const SizedBox(height: 16),
+
+          // Nombre del titular
+          Text(
+            card.cardholderName.isNotEmpty
+                ? card.cardholderName.toUpperCase()
+                : 'TITULAR NO ESPECIFICADO',
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              letterSpacing: 1.0,
+              fontSize: 14,
+            ),
+          ),
+
+          const SizedBox(height: 8),
 
           // Número de tarjeta (formateado)
           Text(
@@ -79,39 +116,42 @@ class CardItem extends StatelessWidget {
                 ],
               ),
 
-              // Día de pago
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'PAGO',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade700,
+              // Solo mostrar días de pago y corte para tarjetas de crédito u otro tipo
+              if (isCredit) ...[
+                // Día de pago
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'PAGO',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade700,
+                      ),
                     ),
-                  ),
-                  Text(
-                    'Día ${card.paymentDay}',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ],
-              ),
+                    Text(
+                      'Día ${card.paymentDay}',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
+                ),
 
-              // Día de corte
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'CORTE',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade700,
+                // Día de corte
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'CORTE',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade700,
+                      ),
                     ),
-                  ),
-                  Text(
-                    'Día ${card.cutOffDay}',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ],
-              ),
+                    Text(
+                      'Día ${card.cutOffDay}',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ],

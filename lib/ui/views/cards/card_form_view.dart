@@ -1,5 +1,6 @@
 import 'package:economia/data/blocs/card_form_bloc.dart';
 import 'package:economia/data/enums/card_type.dart';
+import 'package:economia/data/enums/card_network.dart';
 import 'package:economia/data/events/card_form_event.dart';
 import 'package:economia/data/states/card_form_state.dart';
 import 'package:flutter/material.dart';
@@ -17,27 +18,33 @@ class _CardFormViewState extends State<CardFormView> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _cardNumberController;
   late TextEditingController _bankNameController;
+  late TextEditingController _aliasController;
+  late TextEditingController _cardholderNameController;
 
   @override
   void initState() {
     super.initState();
     _cardNumberController = TextEditingController();
     _bankNameController = TextEditingController();
+    _aliasController = TextEditingController();
+    _cardholderNameController = TextEditingController();
   }
 
   @override
   void dispose() {
     _cardNumberController.dispose();
     _bankNameController.dispose();
+    _aliasController.dispose();
+    _cardholderNameController.dispose();
     super.dispose();
   }
 
-  // Selector de mes y año para fecha de expiración
+  // Métodos existentes para seleccionar fecha y día
   Future<void> _selectMonthYear(BuildContext context) async {
+    // Código existente sin cambios...
     final state = context.read<CardFormBloc>().state as CardFormReadyState;
     final initialDate = state.expirationDate;
 
-    // Mostrar un diálogo personalizado para seleccionar mes y año
     final Map<String, int>? result = await showDialog<Map<String, int>>(
       context: context,
       builder: (BuildContext context) {
@@ -135,13 +142,12 @@ class _CardFormViewState extends State<CardFormView> {
     }
   }
 
-  // Selector de día para fechas de pago y corte
   Future<void> _selectDay(BuildContext context, bool isPaymentDay) async {
+    // Código existente sin cambios...
     final CardFormReadyState state =
         context.read<CardFormBloc>().state as CardFormReadyState;
     final initialDay = isPaymentDay ? state.paymentDay : state.cutOffDay;
 
-    // Diálogo para seleccionar el día del mes
     final int? selectedDay = await showDialog<int>(
       context: context,
       builder: (BuildContext context) {
@@ -237,6 +243,13 @@ class _CardFormViewState extends State<CardFormView> {
             // Actualizar los controladores de texto con los valores del estado
             _cardNumberController.text = state.cardNumber;
             _bankNameController.text = state.bankName;
+            _aliasController.text = state.alias;
+            _cardholderNameController.text = state.cardholderName;
+
+            // Verificar si mostrar campos específicos para tarjetas de crédito
+            bool isCredit =
+                state.cardType == CardType.credit ||
+                state.cardType == CardType.other;
 
             return Padding(
               padding: const EdgeInsets.all(24),
@@ -244,6 +257,22 @@ class _CardFormViewState extends State<CardFormView> {
                 key: _formKey,
                 child: ListView(
                   children: [
+                    // Campo de alias (nuevo)
+                    TextFormField(
+                      controller: _aliasController,
+                      decoration: const InputDecoration(
+                        labelText: 'Alias de la Tarjeta',
+                        hintText: 'Ej: Tarjeta Personal, Tarjeta de Trabajo',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged:
+                          (value) => context.read<CardFormBloc>().add(
+                            CardFormUpdateAliasEvent(value),
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Campo de número de tarjeta (existente)
                     TextFormField(
                       controller: _cardNumberController,
                       decoration: const InputDecoration(
@@ -270,6 +299,53 @@ class _CardFormViewState extends State<CardFormView> {
                       },
                     ),
                     const SizedBox(height: 16),
+
+                    // Campo de titular de la tarjeta (nuevo)
+                    TextFormField(
+                      controller: _cardholderNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Titular de la Tarjeta',
+                        hintText: 'Nombre como aparece en la tarjeta',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged:
+                          (value) => context.read<CardFormBloc>().add(
+                            CardFormUpdateCardholderNameEvent(value),
+                          ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor ingrese el nombre del titular';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Selector de red de tarjeta (nuevo)
+                    DropdownButtonFormField<CardNetwork>(
+                      decoration: const InputDecoration(
+                        labelText: 'Red de la Tarjeta',
+                        border: OutlineInputBorder(),
+                      ),
+                      value: state.cardNetwork,
+                      items:
+                          CardNetwork.values.map((CardNetwork network) {
+                            return DropdownMenuItem<CardNetwork>(
+                              value: network,
+                              child: Text(network.displayName),
+                            );
+                          }).toList(),
+                      onChanged: (CardNetwork? newValue) {
+                        if (newValue != null) {
+                          context.read<CardFormBloc>().add(
+                            CardFormUpdateCardNetworkEvent(newValue),
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Selector de tipo de tarjeta (existente)
                     DropdownButtonFormField<CardType>(
                       decoration: const InputDecoration(
                         labelText: 'Tipo de Tarjeta',
@@ -292,6 +368,8 @@ class _CardFormViewState extends State<CardFormView> {
                       },
                     ),
                     const SizedBox(height: 16),
+
+                    // Campo de banco (existente)
                     TextFormField(
                       controller: _bankNameController,
                       decoration: const InputDecoration(
@@ -312,7 +390,8 @@ class _CardFormViewState extends State<CardFormView> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    // Selector de mes/año para fecha de expiración
+
+                    // Selector de mes/año para fecha de expiración (existente)
                     GestureDetector(
                       onTap: () => _selectMonthYear(context),
                       child: InputDecorator(
@@ -333,48 +412,55 @@ class _CardFormViewState extends State<CardFormView> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // Selector de día para fecha de pago
-                    GestureDetector(
-                      onTap: () => _selectDay(context, true),
-                      child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Día de Pago',
-                          border: OutlineInputBorder(),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Día ${state.paymentDay}',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                            const Icon(Icons.calendar_today),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Selector de día para fecha de corte
-                    GestureDetector(
-                      onTap: () => _selectDay(context, false),
-                      child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Día de Corte',
-                          border: OutlineInputBorder(),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Día ${state.cutOffDay}',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                            const Icon(Icons.calendar_today),
-                          ],
+
+                    // Campos específicos para tarjetas de crédito
+                    if (isCredit) ...[
+                      // Selector de día para fecha de pago
+                      GestureDetector(
+                        onTap: () => _selectDay(context, true),
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Día de Pago',
+                            border: OutlineInputBorder(),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Día ${state.paymentDay}',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              const Icon(Icons.calendar_today),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 16),
+
+                      // Selector de día para fecha de corte
+                      GestureDetector(
+                        onTap: () => _selectDay(context, false),
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Día de Corte',
+                            border: OutlineInputBorder(),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Día ${state.cutOffDay}',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              const Icon(Icons.calendar_today),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 24),
+
+                    // Botón de guardar (existente)
                     ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {

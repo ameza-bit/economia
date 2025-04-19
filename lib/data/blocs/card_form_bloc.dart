@@ -1,5 +1,5 @@
-// lib/data/blocs/card_form_bloc.dart
 import 'package:economia/data/blocs/card_bloc.dart';
+import 'package:economia/data/enums/card_type.dart';
 import 'package:economia/data/events/card_event.dart';
 import 'package:economia/data/events/card_form_event.dart';
 import 'package:economia/data/models/financial_card.dart';
@@ -18,6 +18,10 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
     on<CardFormUpdateExpirationDateEvent>(_onUpdateExpirationDate);
     on<CardFormUpdatePaymentDayEvent>(_onUpdatePaymentDay);
     on<CardFormUpdateCutOffDayEvent>(_onUpdateCutOffDay);
+    // Nuevos eventos
+    on<CardFormUpdateAliasEvent>(_onUpdateAlias);
+    on<CardFormUpdateCardholderNameEvent>(_onUpdateCardholderName);
+    on<CardFormUpdateCardNetworkEvent>(_onUpdateCardNetwork);
     on<CardFormSaveEvent>(_onSave);
   }
 
@@ -32,6 +36,7 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
     );
   }
 
+  // Métodos existentes...
   void _onUpdateCardNumber(
     CardFormUpdateCardNumberEvent event,
     Emitter<CardFormState> emit,
@@ -96,6 +101,37 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
     }
   }
 
+  // Nuevos métodos para los nuevos eventos
+  void _onUpdateAlias(
+    CardFormUpdateAliasEvent event,
+    Emitter<CardFormState> emit,
+  ) {
+    if (state is CardFormReadyState) {
+      final currentState = state as CardFormReadyState;
+      emit(currentState.copyWith(alias: event.alias));
+    }
+  }
+
+  void _onUpdateCardholderName(
+    CardFormUpdateCardholderNameEvent event,
+    Emitter<CardFormState> emit,
+  ) {
+    if (state is CardFormReadyState) {
+      final currentState = state as CardFormReadyState;
+      emit(currentState.copyWith(cardholderName: event.cardholderName));
+    }
+  }
+
+  void _onUpdateCardNetwork(
+    CardFormUpdateCardNetworkEvent event,
+    Emitter<CardFormState> emit,
+  ) {
+    if (state is CardFormReadyState) {
+      final currentState = state as CardFormReadyState;
+      emit(currentState.copyWith(cardNetwork: event.cardNetwork));
+    }
+  }
+
   void _onSave(CardFormSaveEvent event, Emitter<CardFormState> emit) async {
     if (state is CardFormReadyState) {
       // IMPORTANTE: Guardar referencia al estado ANTES de emitir el nuevo estado
@@ -115,17 +151,26 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
           return;
         }
 
-        // Validar que los días están en un rango válido
-        if (currentState.paymentDay < 1 || currentState.paymentDay > 31) {
-          emit(CardFormErrorState('El día de pago debe estar entre 1 y 31'));
-          emit(currentState);
+        if (currentState.cardholderName.isEmpty) {
+          emit(CardFormErrorState('Ingrese el nombre del titular'));
+          emit(currentState); // Volver al estado anterior
           return;
         }
 
-        if (currentState.cutOffDay < 1 || currentState.cutOffDay > 31) {
-          emit(CardFormErrorState('El día de corte debe estar entre 1 y 31'));
-          emit(currentState);
-          return;
+        // Validar que los días están en un rango válido si es tarjeta de crédito
+        if (currentState.cardType == CardType.credit ||
+            currentState.cardType == CardType.other) {
+          if (currentState.paymentDay < 1 || currentState.paymentDay > 31) {
+            emit(CardFormErrorState('El día de pago debe estar entre 1 y 31'));
+            emit(currentState);
+            return;
+          }
+
+          if (currentState.cutOffDay < 1 || currentState.cutOffDay > 31) {
+            emit(CardFormErrorState('El día de corte debe estar entre 1 y 31'));
+            emit(currentState);
+            return;
+          }
         }
 
         // Ahora emitimos el estado de carga
@@ -143,6 +188,9 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
           paymentDay: currentState.paymentDay,
           cutOffDay: currentState.cutOffDay,
           bankName: currentState.bankName,
+          alias: currentState.alias,
+          cardholderName: currentState.cardholderName,
+          cardNetwork: currentState.cardNetwork,
         );
 
         // Guardar tarjeta

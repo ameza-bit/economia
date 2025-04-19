@@ -1,4 +1,5 @@
 import 'package:economia/data/enums/card_type.dart';
+import 'package:economia/data/enums/card_network.dart';
 
 class FinancialCard {
   final String id;
@@ -8,6 +9,9 @@ class FinancialCard {
   final int paymentDay;
   final int cutOffDay;
   final String bankName;
+  final String alias;
+  final String cardholderName;
+  final CardNetwork cardNetwork;
 
   FinancialCard({
     required this.id,
@@ -17,17 +21,29 @@ class FinancialCard {
     required this.paymentDay,
     required this.cutOffDay,
     required this.bankName,
+    required this.alias,
+    required this.cardholderName,
+    required this.cardNetwork,
   });
 
   factory FinancialCard.fromJson(Map<String, dynamic> json) => FinancialCard(
     id: json['id'] ?? '',
     cardNumber: json['cardNumber'] ?? 0,
-    cardType: CardType.values[json['cardType'] ?? 0],
+    cardType:
+        json['cardType'] != null
+            ? CardType.values[json['cardType']]
+            : CardType.other,
     expirationDate:
         DateTime.tryParse(json['expirationDate'] ?? '') ?? DateTime.now(),
     paymentDay: json['paymentDay'] ?? 1,
     cutOffDay: json['cutOffDay'] ?? 15,
     bankName: json['bankName'] ?? '',
+    alias: json['alias'] ?? '',
+    cardholderName: json['cardholderName'] ?? '',
+    cardNetwork:
+        json['cardNetwork'] != null
+            ? CardNetwork.values[json['cardNetwork']]
+            : CardNetwork.other,
   );
 
   Map<String, dynamic> toJson() => {
@@ -38,5 +54,8 @@ class FinancialCard {
     'paymentDay': paymentDay,
     'cutOffDay': cutOffDay,
     'bankName': bankName,
+    'alias': alias,
+    'cardholderName': cardholderName,
+    'cardNetwork': cardNetwork.index,
   };
 }

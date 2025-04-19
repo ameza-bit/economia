@@ -1,5 +1,5 @@
-// lib/data/events/card_form_event.dart
 import 'package:economia/data/enums/card_type.dart';
+import 'package:economia/data/enums/card_network.dart';
 import 'package:flutter/material.dart' show BuildContext;
 
 sealed class CardFormEvent {}
@@ -35,6 +35,22 @@ class CardFormUpdatePaymentDayEvent extends CardFormEvent {
 class CardFormUpdateCutOffDayEvent extends CardFormEvent {
   final int day;
   CardFormUpdateCutOffDayEvent(this.day);
+}
+
+// Nuevos eventos
+class CardFormUpdateAliasEvent extends CardFormEvent {
+  final String alias;
+  CardFormUpdateAliasEvent(this.alias);
+}
+
+class CardFormUpdateCardholderNameEvent extends CardFormEvent {
+  final String cardholderName;
+  CardFormUpdateCardholderNameEvent(this.cardholderName);
+}
+
+class CardFormUpdateCardNetworkEvent extends CardFormEvent {
+  final CardNetwork cardNetwork;
+  CardFormUpdateCardNetworkEvent(this.cardNetwork);
 }
 
 class CardFormSaveEvent extends CardFormEvent {

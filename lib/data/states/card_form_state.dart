@@ -1,5 +1,5 @@
-// lib/data/states/card_form_state.dart
 import 'package:economia/data/enums/card_type.dart';
+import 'package:economia/data/enums/card_network.dart';
 
 sealed class CardFormState {}
 
@@ -24,6 +24,9 @@ class CardFormReadyState extends CardFormState {
   final DateTime expirationDate;
   final int paymentDay;
   final int cutOffDay;
+  final String alias;
+  final String cardholderName;
+  final CardNetwork cardNetwork;
 
   CardFormReadyState({
     this.cardNumber = '',
@@ -32,6 +35,9 @@ class CardFormReadyState extends CardFormState {
     required this.expirationDate,
     required this.paymentDay,
     required this.cutOffDay,
+    this.alias = '',
+    this.cardholderName = '',
+    this.cardNetwork = CardNetwork.visa,
   });
 
   CardFormReadyState copyWith({
@@ -41,6 +47,9 @@ class CardFormReadyState extends CardFormState {
     DateTime? expirationDate,
     int? paymentDay,
     int? cutOffDay,
+    String? alias,
+    String? cardholderName,
+    CardNetwork? cardNetwork,
   }) {
     return CardFormReadyState(
       cardNumber: cardNumber ?? this.cardNumber,
@@ -49,6 +58,9 @@ class CardFormReadyState extends CardFormState {
       expirationDate: expirationDate ?? this.expirationDate,
       paymentDay: paymentDay ?? this.paymentDay,
       cutOffDay: cutOffDay ?? this.cutOffDay,
+      alias: alias ?? this.alias,
+      cardholderName: cardholderName ?? this.cardholderName,
+      cardNetwork: cardNetwork ?? this.cardNetwork,
     );
   }
 }
