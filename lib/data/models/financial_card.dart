@@ -5,8 +5,8 @@ class FinancialCard {
   final int cardNumber;
   final CardType cardType;
   final DateTime expirationDate;
-  final DateTime paymentDate;
-  final DateTime cutOffDate;
+  final int paymentDay;
+  final int cutOffDay;
   final String bankName;
 
   FinancialCard({
@@ -14,8 +14,8 @@ class FinancialCard {
     required this.cardNumber,
     required this.cardType,
     required this.expirationDate,
-    required this.paymentDate,
-    required this.cutOffDate,
+    required this.paymentDay,
+    required this.cutOffDay,
     required this.bankName,
   });
 
@@ -25,8 +25,8 @@ class FinancialCard {
     cardType: CardType.values[json['cardType'] ?? 0],
     expirationDate:
         DateTime.tryParse(json['expirationDate'] ?? '') ?? DateTime.now(),
-    paymentDate: DateTime.tryParse(json['paymentDate'] ?? '') ?? DateTime.now(),
-    cutOffDate: DateTime.tryParse(json['cutOffDate'] ?? '') ?? DateTime.now(),
+    paymentDay: json['paymentDay'] ?? 1,
+    cutOffDay: json['cutOffDay'] ?? 15,
     bankName: json['bankName'] ?? '',
   );
 
@@ -35,8 +35,8 @@ class FinancialCard {
     'cardNumber': cardNumber,
     'cardType': cardType.index,
     'expirationDate': expirationDate.toIso8601String(),
-    'paymentDate': paymentDate.toIso8601String(),
-    'cutOffDate': cutOffDate.toIso8601String(),
+    'paymentDay': paymentDay,
+    'cutOffDay': cutOffDay,
     'bankName': bankName,
   };
 }

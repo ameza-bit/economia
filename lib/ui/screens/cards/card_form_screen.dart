@@ -1,28 +1,38 @@
+// lib/ui/screens/cards/card_form_screen.dart
+import 'package:economia/data/blocs/card_form_bloc.dart';
 import 'package:economia/data/enums/card_type.dart';
-import 'package:economia/data/models/financial_card.dart';
+import 'package:economia/data/events/card_form_event.dart';
 import 'package:economia/data/repositories/card_repository.dart';
+import 'package:economia/data/states/card_form_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class CardFormScreen extends StatefulWidget {
+class CardFormScreen extends StatelessWidget {
   static const String routeName = 'card_form';
   const CardFormScreen({super.key});
 
   @override
-  State<CardFormScreen> createState() => _CardFormScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create:
+          (context) => CardFormBloc(CardRepository())..add(CardFormInitEvent()),
+      child: const _CardFormView(),
+    );
+  }
 }
 
-class _CardFormScreenState extends State<CardFormScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _cardRepository = CardRepository();
+class _CardFormView extends StatefulWidget {
+  const _CardFormView();
 
+  @override
+  State<_CardFormView> createState() => _CardFormViewState();
+}
+
+class _CardFormViewState extends State<_CardFormView> {
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _cardNumberController;
   late TextEditingController _bankNameController;
-
-  CardType _selectedCardType = CardType.credit;
-  DateTime _expirationDate = DateTime.now().add(const Duration(days: 365 * 2));
-  DateTime _paymentDate = DateTime.now();
-  DateTime _cutOffDate = DateTime.now().subtract(const Duration(days: 7));
 
   @override
   void initState() {
@@ -38,39 +48,179 @@ class _CardFormScreenState extends State<CardFormScreen> {
     super.dispose();
   }
 
-  Future<void> _selectDate(
-    BuildContext context,
-    DateTime initialDate,
-    Function(DateTime) onDateSelected,
-  ) async {
-    final DateTime? picked = await showDatePicker(
+  // Selector de mes y año para fecha de expiración
+  Future<void> _selectMonthYear(BuildContext context) async {
+    final state = context.read<CardFormBloc>().state as CardFormReadyState;
+    final initialDate = state.expirationDate;
+
+    // Mostrar un diálogo personalizado para seleccionar mes y año
+    final Map<String, int>? result = await showDialog<Map<String, int>>(
       context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      builder: (BuildContext context) {
+        int selectedMonth = initialDate.month;
+        int selectedYear = initialDate.year;
+
+        return AlertDialog(
+          title: Text('Fecha de Expiración'),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Selector de mes
+                  Row(
+                    children: [
+                      Text('Mes: '),
+                      Expanded(
+                        child: DropdownButton<int>(
+                          isExpanded: true,
+                          value: selectedMonth,
+                          items:
+                              List.generate(12, (index) => index + 1)
+                                  .map(
+                                    (month) => DropdownMenuItem<int>(
+                                      value: month,
+                                      child: Text('$month'),
+                                    ),
+                                  )
+                                  .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => selectedMonth = value);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  // Selector de año
+                  Row(
+                    children: [
+                      Text('Año: '),
+                      Expanded(
+                        child: DropdownButton<int>(
+                          isExpanded: true,
+                          value: selectedYear,
+                          items:
+                              List.generate(
+                                    10,
+                                    (index) => DateTime.now().year + index,
+                                  )
+                                  .map(
+                                    (year) => DropdownMenuItem<int>(
+                                      value: year,
+                                      child: Text('$year'),
+                                    ),
+                                  )
+                                  .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => selectedYear = value);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed:
+                  () => Navigator.of(
+                    context,
+                  ).pop({'month': selectedMonth, 'year': selectedYear}),
+              child: Text('Aceptar'),
+            ),
+          ],
+        );
+      },
     );
-    if (picked != null) {
-      onDateSelected(picked);
+
+    if (result != null && context.mounted) {
+      context.read<CardFormBloc>().add(
+        CardFormUpdateExpirationDateEvent(result['month']!, result['year']!),
+      );
     }
   }
 
-  void _saveCard() {
-    if (_formKey.currentState!.validate()) {
-      // Generar un ID simple usando timestamp
-      final id = DateTime.now().millisecondsSinceEpoch.toString();
+  // Selector de día para fechas de pago y corte
+  Future<void> _selectDay(BuildContext context, bool isPaymentDay) async {
+    final CardFormReadyState state =
+        context.read<CardFormBloc>().state as CardFormReadyState;
+    final initialDay = isPaymentDay ? state.paymentDay : state.cutOffDay;
 
-      final newCard = FinancialCard(
-        id: id,
-        cardNumber: int.parse(_cardNumberController.text),
-        cardType: _selectedCardType,
-        expirationDate: _expirationDate,
-        paymentDate: _paymentDate,
-        cutOffDate: _cutOffDate,
-        bankName: _bankNameController.text,
-      );
+    // Diálogo para seleccionar el día del mes
+    final int? selectedDay = await showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        int tempDay = initialDay;
+        return AlertDialog(
+          title: Text(isPaymentDay ? 'Día de pago' : 'Día de corte'),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Seleccione el día del mes:'),
+                  SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.remove),
+                        onPressed:
+                            tempDay > 1
+                                ? () => setState(() => tempDay--)
+                                : null,
+                      ),
+                      SizedBox(width: 16),
+                      Text('$tempDay', style: TextStyle(fontSize: 24)),
+                      SizedBox(width: 16),
+                      IconButton(
+                        icon: Icon(Icons.add),
+                        onPressed:
+                            tempDay < 31
+                                ? () => setState(() => tempDay++)
+                                : null,
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(tempDay),
+              child: Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
 
-      _cardRepository.addCardLocal(newCard);
-      Navigator.pop(context);
+    if (selectedDay != null && context.mounted) {
+      if (isPaymentDay) {
+        context.read<CardFormBloc>().add(
+          CardFormUpdatePaymentDayEvent(selectedDay),
+        );
+      } else {
+        context.read<CardFormBloc>().add(
+          CardFormUpdateCutOffDayEvent(selectedDay),
+        );
+      }
     }
   }
 
@@ -78,146 +228,180 @@ class _CardFormScreenState extends State<CardFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Registrar Tarjeta'), centerTitle: true),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: _cardNumberController,
-                decoration: const InputDecoration(
-                  labelText: 'Número de Tarjeta',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingrese el número de tarjeta';
-                  }
-                  return null;
-                },
+      body: BlocConsumer<CardFormBloc, CardFormState>(
+        listener: (context, state) {
+          if (state is CardFormSuccessState) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
+            Navigator.pop(context);
+          } else if (state is CardFormErrorState) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<CardType>(
-                decoration: const InputDecoration(
-                  labelText: 'Tipo de Tarjeta',
-                  border: OutlineInputBorder(),
-                ),
-                value: _selectedCardType,
-                items:
-                    CardType.values.map((CardType type) {
-                      return DropdownMenuItem<CardType>(
-                        value: type,
-                        child: Text(type.displayName),
-                      );
-                    }).toList(),
-                onChanged: (CardType? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedCardType = newValue;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _bankNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Banco',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingrese el nombre del banco';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap:
-                    () => _selectDate(
-                      context,
-                      _expirationDate,
-                      (date) => setState(() => _expirationDate = date),
-                    ),
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Fecha de Expiración',
-                    border: OutlineInputBorder(),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${_expirationDate.day}/${_expirationDate.month}/${_expirationDate.year}',
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is CardFormLoadingState) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is CardFormReadyState) {
+            // Actualizar los controladores de texto con los valores del estado
+            _cardNumberController.text = state.cardNumber;
+            _bankNameController.text = state.bankName;
+
+            return Padding(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  children: [
+                    TextFormField(
+                      controller: _cardNumberController,
+                      decoration: const InputDecoration(
+                        labelText: 'Número de Tarjeta',
+                        border: OutlineInputBorder(),
                       ),
-                      const Icon(Icons.calendar_today),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap:
-                    () => _selectDate(
-                      context,
-                      _paymentDate,
-                      (date) => setState(() => _paymentDate = date),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      onChanged:
+                          (value) => context.read<CardFormBloc>().add(
+                            CardFormUpdateCardNumberEvent(value),
+                          ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor ingrese el número de tarjeta';
+                        }
+                        return null;
+                      },
                     ),
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Fecha de Pago',
-                    border: OutlineInputBorder(),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${_paymentDate.day}/${_paymentDate.month}/${_paymentDate.year}',
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<CardType>(
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo de Tarjeta',
+                        border: OutlineInputBorder(),
                       ),
-                      const Icon(Icons.calendar_today),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap:
-                    () => _selectDate(
-                      context,
-                      _cutOffDate,
-                      (date) => setState(() => _cutOffDate = date),
+                      value: state.cardType,
+                      items:
+                          CardType.values.map((CardType type) {
+                            return DropdownMenuItem<CardType>(
+                              value: type,
+                              child: Text(type.displayName),
+                            );
+                          }).toList(),
+                      onChanged: (CardType? newValue) {
+                        if (newValue != null) {
+                          context.read<CardFormBloc>().add(
+                            CardFormUpdateCardTypeEvent(newValue),
+                          );
+                        }
+                      },
                     ),
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Fecha de Corte',
-                    border: OutlineInputBorder(),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${_cutOffDate.day}/${_cutOffDate.month}/${_cutOffDate.year}',
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _bankNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Banco',
+                        border: OutlineInputBorder(),
                       ),
-                      const Icon(Icons.calendar_today),
-                    ],
-                  ),
+                      onChanged:
+                          (value) => context.read<CardFormBloc>().add(
+                            CardFormUpdateBankNameEvent(value),
+                          ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor ingrese el nombre del banco';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    // Selector de mes/año para fecha de expiración
+                    GestureDetector(
+                      onTap: () => _selectMonthYear(context),
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Fecha de Expiración (Mes/Año)',
+                          border: OutlineInputBorder(),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${state.expirationDate.month}/${state.expirationDate.year}',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            const Icon(Icons.calendar_today),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Selector de día para fecha de pago
+                    GestureDetector(
+                      onTap: () => _selectDay(context, true),
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Día de Pago',
+                          border: OutlineInputBorder(),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Día ${state.paymentDay}',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            const Icon(Icons.calendar_today),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Selector de día para fecha de corte
+                    GestureDetector(
+                      onTap: () => _selectDay(context, false),
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Día de Corte',
+                          border: OutlineInputBorder(),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Día ${state.cutOffDay}',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            const Icon(Icons.calendar_today),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          context.read<CardFormBloc>().add(CardFormSaveEvent());
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text('Guardar Tarjeta'),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _saveCard,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text('Guardar Tarjeta'),
-              ),
-            ],
-          ),
-        ),
+            );
+          }
+
+          return const Center(child: Text('Cargando...'));
+        },
       ),
     );
   }
