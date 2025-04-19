@@ -1,4 +1,4 @@
-import 'package:economia/data/models/card.dart';
+import 'package:economia/data/models/financial_card.dart';
 
 sealed class CardState {}
 
@@ -7,7 +7,7 @@ class InitialCardState extends CardState {}
 class LoadingCardState extends CardState {}
 
 class LoadedCardState extends CardState {
-  final List<Card> cards;
+  final List<FinancialCard> cards;
   LoadedCardState(this.cards);
 }
 

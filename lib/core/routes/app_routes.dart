@@ -1,3 +1,4 @@
+import 'package:economia/ui/screens/cards/card_form_screen.dart';
 import 'package:economia/ui/screens/concepts/concept_form_screen.dart';
 import 'package:economia/ui/screens/concepts/concept_list_screen.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,11 @@ class AppRoutes {
             name: ConceptFormScreen.routeName,
             path: ConceptFormScreen.routeName,
             builder: (context, state) => ConceptFormScreen(),
+          ),
+          GoRoute(
+            name: CardFormScreen.routeName,
+            path: CardFormScreen.routeName,
+            builder: (context, state) => CardFormScreen(),
           ),
         ],
       ),

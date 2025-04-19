@@ -1,6 +1,6 @@
 import 'package:economia/data/enums/card_type.dart';
 
-class Card {
+class FinancialCard {
   final String id;
   final int cardNumber;
   final CardType cardType;
@@ -9,7 +9,7 @@ class Card {
   final DateTime cutOffDate;
   final String bankName;
 
-  Card({
+  FinancialCard({
     required this.id,
     required this.cardNumber,
     required this.cardType,
@@ -19,7 +19,7 @@ class Card {
     required this.bankName,
   });
 
-  factory Card.fromJson(Map<String, dynamic> json) => Card(
+  factory FinancialCard.fromJson(Map<String, dynamic> json) => FinancialCard(
     id: json['id'] ?? '',
     cardNumber: json['cardNumber'] ?? 0,
     cardType: CardType.values[json['cardType'] ?? 0],
