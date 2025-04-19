@@ -8,7 +8,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CardFormView extends StatefulWidget {
-  const CardFormView({super.key});
+  final bool isEditing;
+  final String? cardId;
+
+  const CardFormView({super.key, this.isEditing = false, this.cardId});
 
   @override
   State<CardFormView> createState() => _CardFormViewState();
@@ -217,7 +220,10 @@ class _CardFormViewState extends State<CardFormView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Registrar Tarjeta'), centerTitle: true),
+      appBar: AppBar(
+        title: Text(widget.isEditing ? 'Editar Tarjeta' : 'Registrar Tarjeta'),
+        centerTitle: true,
+      ),
       body: BlocConsumer<CardFormBloc, CardFormState>(
         listener: (context, state) {
           if (state is CardFormSuccessState) {
@@ -257,13 +263,15 @@ class _CardFormViewState extends State<CardFormView> {
                 key: _formKey,
                 child: ListView(
                   children: [
-                    // Campo de alias (nuevo)
+                    // Campo de alias (opcional)
                     TextFormField(
                       controller: _aliasController,
                       decoration: const InputDecoration(
-                        labelText: 'Alias de la Tarjeta',
+                        labelText: 'Alias de la Tarjeta (opcional)',
                         hintText: 'Ej: Tarjeta Personal, Tarjeta de Trabajo',
                         border: OutlineInputBorder(),
+                        helperText:
+                            'Nombre corto para identificar esta tarjeta',
                       ),
                       onChanged:
                           (value) => context.read<CardFormBloc>().add(
@@ -272,12 +280,14 @@ class _CardFormViewState extends State<CardFormView> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Campo de número de tarjeta (existente)
+                    // Campo de número de tarjeta (obligatorio)
                     TextFormField(
                       controller: _cardNumberController,
                       decoration: const InputDecoration(
-                        labelText: 'Número de Tarjeta',
+                        labelText: 'Número de Tarjeta *',
                         border: OutlineInputBorder(),
+                        helperText: 'Últimos 4 dígitos o número completo',
+                        errorMaxLines: 2,
                       ),
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -287,9 +297,9 @@ class _CardFormViewState extends State<CardFormView> {
                           ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Por favor ingrese el número de tarjeta';
+                          return 'El número de tarjeta es obligatorio';
                         } else if (value.length < 4) {
-                          return 'El número de tarjeta debe tener al menos 4 caracteres';
+                          return 'Ingrese al menos los últimos 4 dígitos de la tarjeta';
                         } else if (value.length > 16) {
                           return 'El número de tarjeta no puede tener más de 16 caracteres';
                         } else if (!RegExp(r'^\d+$').hasMatch(value)) {
@@ -300,13 +310,14 @@ class _CardFormViewState extends State<CardFormView> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Campo de titular de la tarjeta (nuevo)
+                    // Campo de titular de la tarjeta (obligatorio)
                     TextFormField(
                       controller: _cardholderNameController,
                       decoration: const InputDecoration(
-                        labelText: 'Titular de la Tarjeta',
+                        labelText: 'Titular de la Tarjeta *',
                         hintText: 'Nombre como aparece en la tarjeta',
                         border: OutlineInputBorder(),
+                        helperText: 'Nombre del propietario de la tarjeta',
                       ),
                       onChanged:
                           (value) => context.read<CardFormBloc>().add(
@@ -314,18 +325,19 @@ class _CardFormViewState extends State<CardFormView> {
                           ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Por favor ingrese el nombre del titular';
+                          return 'El nombre del titular es obligatorio';
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
 
-                    // Selector de red de tarjeta (nuevo)
+                    // Selector de red de tarjeta (obligatorio)
                     DropdownButtonFormField<CardNetwork>(
                       decoration: const InputDecoration(
-                        labelText: 'Red de la Tarjeta',
+                        labelText: 'Red de la Tarjeta *',
                         border: OutlineInputBorder(),
+                        helperText: 'Visa, MasterCard, etc.',
                       ),
                       value: state.cardNetwork,
                       items:
@@ -345,11 +357,12 @@ class _CardFormViewState extends State<CardFormView> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Selector de tipo de tarjeta (existente)
+                    // Selector de tipo de tarjeta (obligatorio)
                     DropdownButtonFormField<CardType>(
                       decoration: const InputDecoration(
-                        labelText: 'Tipo de Tarjeta',
+                        labelText: 'Tipo de Tarjeta *',
                         border: OutlineInputBorder(),
+                        helperText: 'Crédito, débito, regalo, etc.',
                       ),
                       value: state.cardType,
                       items:
@@ -369,12 +382,13 @@ class _CardFormViewState extends State<CardFormView> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Campo de banco (existente)
+                    // Campo de banco (obligatorio)
                     TextFormField(
                       controller: _bankNameController,
                       decoration: const InputDecoration(
-                        labelText: 'Banco',
+                        labelText: 'Banco *',
                         border: OutlineInputBorder(),
+                        helperText: 'Institución financiera emisora',
                       ),
                       onChanged:
                           (value) => context.read<CardFormBloc>().add(
@@ -382,22 +396,21 @@ class _CardFormViewState extends State<CardFormView> {
                           ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Por favor ingrese el nombre del banco';
-                        } else if (value.length < 3) {
-                          return 'El nombre del banco debe tener al menos 3 caracteres';
+                          return 'El nombre del banco es obligatorio';
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
 
-                    // Selector de mes/año para fecha de expiración (existente)
+                    // Selector de mes/año para fecha de expiración (obligatorio)
                     GestureDetector(
                       onTap: () => _selectMonthYear(context),
                       child: InputDecorator(
                         decoration: const InputDecoration(
-                          labelText: 'Fecha de Expiración (Mes/Año)',
+                          labelText: 'Fecha de Expiración (Mes/Año) *',
                           border: OutlineInputBorder(),
+                          helperText: 'Fecha de vencimiento de la tarjeta',
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -415,13 +428,25 @@ class _CardFormViewState extends State<CardFormView> {
 
                     // Campos específicos para tarjetas de crédito
                     if (isCredit) ...[
+                      // Encabezado para sección de fechas de pago
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Text(
+                          'Información de Pago (Crédito)',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+
                       // Selector de día para fecha de pago
                       GestureDetector(
                         onTap: () => _selectDay(context, true),
                         child: InputDecorator(
                           decoration: const InputDecoration(
-                            labelText: 'Día de Pago',
+                            labelText: 'Día de Pago *',
                             border: OutlineInputBorder(),
+                            helperText:
+                                'Fecha límite para realizar el pago mensual',
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -442,8 +467,10 @@ class _CardFormViewState extends State<CardFormView> {
                         onTap: () => _selectDay(context, false),
                         child: InputDecorator(
                           decoration: const InputDecoration(
-                            labelText: 'Día de Corte',
+                            labelText: 'Día de Corte *',
                             border: OutlineInputBorder(),
+                            helperText:
+                                'Fecha en que el banco cierra el ciclo mensual',
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -460,19 +487,40 @@ class _CardFormViewState extends State<CardFormView> {
                     ],
                     const SizedBox(height: 24),
 
-                    // Botón de guardar (existente)
+                    // Leyenda de campos obligatorios
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Text(
+                        '* Campos obligatorios',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ),
+
+                    // Botón de guardar/actualizar
                     ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           context.read<CardFormBloc>().add(
-                            CardFormSaveEvent(context: context),
+                            CardFormSaveEvent(
+                              context: context,
+                              isEditing: widget.isEditing,
+                              cardId: widget.cardId,
+                            ),
                           );
                         }
                       },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text('Guardar Tarjeta'),
+                      child: Text(
+                        widget.isEditing
+                            ? 'Actualizar Tarjeta'
+                            : 'Guardar Tarjeta',
+                      ),
                     ),
                   ],
                 ),

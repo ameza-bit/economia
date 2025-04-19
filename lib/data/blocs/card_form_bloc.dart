@@ -18,11 +18,12 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
     on<CardFormUpdateExpirationDateEvent>(_onUpdateExpirationDate);
     on<CardFormUpdatePaymentDayEvent>(_onUpdatePaymentDay);
     on<CardFormUpdateCutOffDayEvent>(_onUpdateCutOffDay);
-    // Nuevos eventos
     on<CardFormUpdateAliasEvent>(_onUpdateAlias);
     on<CardFormUpdateCardholderNameEvent>(_onUpdateCardholderName);
     on<CardFormUpdateCardNetworkEvent>(_onUpdateCardNetwork);
     on<CardFormSaveEvent>(_onSave);
+    on<CardFormLoadExistingCardEvent>(_onLoadExistingCard);
+    on<CardFormDeleteEvent>(_onDelete);
   }
 
   void _onInit(CardFormInitEvent event, Emitter<CardFormState> emit) {
@@ -134,14 +135,12 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
 
   void _onSave(CardFormSaveEvent event, Emitter<CardFormState> emit) async {
     if (state is CardFormReadyState) {
-      // IMPORTANTE: Guardar referencia al estado ANTES de emitir el nuevo estado
       final currentState = state as CardFormReadyState;
 
       try {
-        // Validaciones básicas
         if (currentState.cardNumber.isEmpty) {
           emit(CardFormErrorState('Ingrese el número de tarjeta'));
-          emit(currentState); // Volver al estado anterior
+          emit(currentState);
           return;
         }
 
@@ -176,11 +175,13 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
         // Ahora emitimos el estado de carga
         emit(CardFormLoadingState());
 
-        // Generar un ID simple usando timestamp
-        final id = DateTime.now().millisecondsSinceEpoch.toString();
+        // Generar ID o usar el existente según sea edición o creación
+        final id =
+            event.isEditing && event.cardId != null
+                ? event.cardId!
+                : DateTime.now().millisecondsSinceEpoch.toString();
 
-        // Crear objeto de tarjeta
-        final newCard = FinancialCard(
+        final card = FinancialCard(
           id: id,
           cardNumber: int.parse(currentState.cardNumber),
           cardType: currentState.cardType,
@@ -193,10 +194,15 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
           cardNetwork: currentState.cardNetwork,
         );
 
-        // Guardar tarjeta
-        repository.addCardLocal(newCard);
-
-        emit(CardFormSuccessState('Tarjeta guardada correctamente'));
+        if (event.isEditing) {
+          // Actualizar tarjeta existente
+          repository.updateCardLocal(card);
+          emit(CardFormSuccessState('Tarjeta actualizada correctamente'));
+        } else {
+          // Crear nueva tarjeta
+          repository.addCardLocal(card);
+          emit(CardFormSuccessState('Tarjeta guardada correctamente'));
+        }
 
         if (event.context != null) {
           BlocProvider.of<CardBloc>(
@@ -207,6 +213,47 @@ class CardFormBloc extends Bloc<CardFormEvent, CardFormState> {
       } catch (e) {
         emit(CardFormErrorState('Error al guardar la tarjeta: $e'));
       }
+    }
+  }
+
+  void _onLoadExistingCard(
+    CardFormLoadExistingCardEvent event,
+    Emitter<CardFormState> emit,
+  ) {
+    emit(
+      CardFormReadyState(
+        cardNumber: event.card.cardNumber.toString(),
+        bankName: event.card.bankName,
+        cardType: event.card.cardType,
+        expirationDate: event.card.expirationDate,
+        paymentDay: event.card.paymentDay,
+        cutOffDay: event.card.cutOffDay,
+        alias: event.card.alias,
+        cardholderName: event.card.cardholderName,
+        cardNetwork: event.card.cardNetwork,
+      ),
+    );
+  }
+
+  void _onDelete(CardFormDeleteEvent event, Emitter<CardFormState> emit) {
+    try {
+      // Buscar la tarjeta por ID
+      final cards = repository.getCardsLocal();
+      final cardToDelete = cards.firstWhere((card) => card.id == event.cardId);
+
+      // Eliminar la tarjeta
+      repository.deleteCardLocal(cardToDelete);
+
+      // Emitir estado de éxito
+      emit(CardFormSuccessState('Tarjeta eliminada correctamente'));
+
+      // Refrescar la lista de tarjetas
+      BlocProvider.of<CardBloc>(
+        event.context,
+        listen: false,
+      ).add(RefreshCardEvent());
+    } catch (e) {
+      emit(CardFormErrorState('Error al eliminar la tarjeta: $e'));
     }
   }
 }

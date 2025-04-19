@@ -1,10 +1,16 @@
 import 'package:economia/data/enums/card_type.dart';
 import 'package:economia/data/enums/card_network.dart';
+import 'package:economia/data/models/financial_card.dart';
 import 'package:flutter/material.dart' show BuildContext;
 
 sealed class CardFormEvent {}
 
 class CardFormInitEvent extends CardFormEvent {}
+
+class CardFormLoadExistingCardEvent extends CardFormEvent {
+  final FinancialCard card;
+  CardFormLoadExistingCardEvent(this.card);
+}
 
 class CardFormUpdateCardNumberEvent extends CardFormEvent {
   final String cardNumber;
@@ -37,7 +43,6 @@ class CardFormUpdateCutOffDayEvent extends CardFormEvent {
   CardFormUpdateCutOffDayEvent(this.day);
 }
 
-// Nuevos eventos
 class CardFormUpdateAliasEvent extends CardFormEvent {
   final String alias;
   CardFormUpdateAliasEvent(this.alias);
@@ -55,5 +60,22 @@ class CardFormUpdateCardNetworkEvent extends CardFormEvent {
 
 class CardFormSaveEvent extends CardFormEvent {
   final BuildContext? context;
-  CardFormSaveEvent({this.context});
+  final bool isEditing; // Indicar si estamos editando
+  final String? cardId; // ID de la tarjeta a editar
+  
+  CardFormSaveEvent({
+    this.context, 
+    this.isEditing = false, 
+    this.cardId
+  });
+}
+
+class CardFormDeleteEvent extends CardFormEvent {
+  final String cardId;
+  final BuildContext context;
+  
+  CardFormDeleteEvent({
+    required this.cardId,
+    required this.context,
+  });
 }
