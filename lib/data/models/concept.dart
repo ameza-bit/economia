@@ -10,6 +10,7 @@ class Concept {
   final FinancialCard card;
   final PaymentMode paymentMode;
   final int months;
+  final DateTime purchaseDate; // Nuevo campo
 
   Concept({
     required this.id,
@@ -20,7 +21,8 @@ class Concept {
     required this.card,
     this.paymentMode = PaymentMode.oneTime,
     this.months = 1,
-  });
+    DateTime? purchaseDate, // Parámetro opcional
+  }) : purchaseDate = purchaseDate ?? DateTime.now(); // Valor por defecto
 
   factory Concept.fromJson(Map<String, dynamic> json) {
     return Concept(
@@ -32,6 +34,10 @@ class Concept {
       card: FinancialCard.fromJson(json['card'] ?? {}),
       paymentMode: PaymentMode.values[json['paymentMode'] ?? 0],
       months: json['months'] ?? 1,
+      purchaseDate:
+          json['purchaseDate'] != null
+              ? DateTime.parse(json['purchaseDate'])
+              : DateTime.now(),
     );
   }
 
@@ -44,6 +50,7 @@ class Concept {
     'card': card.toJson(),
     'paymentMode': paymentMode.index,
     'months': months,
+    'purchaseDate': purchaseDate.toIso8601String(),
   };
 
   String get amount => "\$${total.toStringAsFixed(2)}";

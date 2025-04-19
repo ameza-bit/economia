@@ -41,6 +41,11 @@ class ConceptFormUpdateMonthsEvent extends ConceptFormEvent {
   ConceptFormUpdateMonthsEvent(this.months);
 }
 
+class ConceptFormUpdatePurchaseDateEvent extends ConceptFormEvent {
+  final DateTime purchaseDate;
+  ConceptFormUpdatePurchaseDateEvent(this.purchaseDate);
+}
+
 class ConceptFormLoadExistingConceptEvent extends ConceptFormEvent {
   final int conceptId;
   ConceptFormLoadExistingConceptEvent(this.conceptId);

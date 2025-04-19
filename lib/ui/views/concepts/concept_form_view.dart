@@ -1,6 +1,7 @@
 import 'package:economia/data/blocs/card_bloc.dart';
 import 'package:economia/data/blocs/concept_bloc.dart';
 import 'package:economia/data/blocs/concept_form_bloc.dart';
+import 'package:economia/data/enums/card_type.dart';
 import 'package:economia/data/enums/payment_mode.dart';
 import 'package:economia/data/events/concept_event.dart';
 import 'package:economia/data/events/concept_form_event.dart';
@@ -10,6 +11,7 @@ import 'package:economia/data/states/concept_form_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 class ConceptFormView extends StatefulWidget {
   final bool isEditing;
@@ -44,6 +46,29 @@ class _ConceptFormViewState extends State<ConceptFormView> {
     _storeController.dispose();
     _totalController.dispose();
     super.dispose();
+  }
+
+  // Método para seleccionar la fecha de compra
+  Future<void> _selectPurchaseDate(BuildContext context) async {
+    final ConceptFormReadyState formState =
+        context.read<ConceptFormBloc>().state as ConceptFormReadyState;
+    final DateTime initialDate = formState.purchaseDate;
+
+    final DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(
+        const Duration(days: 1),
+      ), // Permitir hasta mañana
+      locale: const Locale('es', 'MX'),
+    );
+
+    if (selectedDate != null && context.mounted) {
+      context.read<ConceptFormBloc>().add(
+        ConceptFormUpdatePurchaseDateEvent(selectedDate),
+      );
+    }
   }
 
   @override
@@ -102,6 +127,9 @@ class _ConceptFormViewState extends State<ConceptFormView> {
             // Determinar si mostrar selector de meses
             final bool showMonthsSelector =
                 state.paymentMode != PaymentMode.oneTime;
+
+            // Verificar si la tarjeta seleccionada es de débito
+            bool isDebitCard = state.selectedCard?.cardType == CardType.debit;
 
             return Padding(
               padding: const EdgeInsets.all(24),
@@ -208,6 +236,32 @@ class _ConceptFormViewState extends State<ConceptFormView> {
                     ),
                     const SizedBox(height: 16),
 
+                    // Selector de fecha de compra
+                    GestureDetector(
+                      onTap: () => _selectPurchaseDate(context),
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Fecha de Compra *',
+                          border: OutlineInputBorder(),
+                          helperText: 'Fecha en que se realizó la compra',
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              DateFormat(
+                                'dd/MM/yyyy',
+                                'es_MX',
+                              ).format(state.purchaseDate),
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            const Icon(Icons.calendar_today),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
                     // Selector de tarjeta
                     BlocBuilder<CardBloc, CardState>(
                       builder: (context, cardState) {
@@ -272,6 +326,16 @@ class _ConceptFormViewState extends State<ConceptFormView> {
                                 final selectedCard = cardState.cards.firstWhere(
                                   (card) => card.id == cardId,
                                 );
+
+                                // Si la tarjeta es de débito, forzar pago único
+                                if (selectedCard.cardType == CardType.debit) {
+                                  context.read<ConceptFormBloc>().add(
+                                    ConceptFormUpdatePaymentModeEvent(
+                                      PaymentMode.oneTime,
+                                    ),
+                                  );
+                                }
+
                                 context.read<ConceptFormBloc>().add(
                                   ConceptFormUpdateSelectedCardEvent(
                                     selectedCard,
@@ -286,6 +350,20 @@ class _ConceptFormViewState extends State<ConceptFormView> {
                       },
                     ),
                     const SizedBox(height: 16),
+
+                    // Mensaje informativo si es tarjeta de débito
+                    if (isDebitCard)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Text(
+                          'Las tarjetas de débito solo permiten pagos únicos',
+                          style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
 
                     // Modo de pago
                     DropdownButtonFormField<PaymentMode>(
@@ -316,21 +394,38 @@ class _ConceptFormViewState extends State<ConceptFormView> {
 
                             return DropdownMenuItem<PaymentMode>(
                               value: mode,
-                              child: Text(displayName),
+                              enabled:
+                                  !isDebitCard || mode == PaymentMode.oneTime,
+                              child: Text(
+                                displayName,
+                                style:
+                                    isDebitCard && mode != PaymentMode.oneTime
+                                        ? TextStyle(color: Colors.grey.shade400)
+                                        : null,
+                              ),
                             );
                           }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          context.read<ConceptFormBloc>().add(
-                            ConceptFormUpdatePaymentModeEvent(value),
-                          );
-                        }
-                      },
+                      onChanged:
+                          isDebitCard
+                              ? (value) {
+                                if (value == PaymentMode.oneTime) {
+                                  context.read<ConceptFormBloc>().add(
+                                    ConceptFormUpdatePaymentModeEvent(value!),
+                                  );
+                                }
+                              }
+                              : (value) {
+                                if (value != null) {
+                                  context.read<ConceptFormBloc>().add(
+                                    ConceptFormUpdatePaymentModeEvent(value),
+                                  );
+                                }
+                              },
                     ),
                     const SizedBox(height: 16),
 
-                    // Selector de número de meses (solo si no es pago único)
-                    if (showMonthsSelector) ...[
+                    // Selector de número de meses (solo si no es pago único y no es tarjeta de débito)
+                    if (showMonthsSelector && !isDebitCard) ...[
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

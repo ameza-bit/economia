@@ -25,6 +25,7 @@ class ConceptFormReadyState extends ConceptFormState {
   final FinancialCard? selectedCard;
   final PaymentMode paymentMode;
   final int months;
+  final DateTime purchaseDate;
 
   ConceptFormReadyState({
     this.name = '',
@@ -34,7 +35,8 @@ class ConceptFormReadyState extends ConceptFormState {
     this.selectedCard,
     this.paymentMode = PaymentMode.oneTime,
     this.months = 1,
-  });
+    DateTime? purchaseDate,
+  }) : purchaseDate = purchaseDate ?? DateTime.now();
 
   ConceptFormReadyState copyWith({
     String? name,
@@ -44,6 +46,7 @@ class ConceptFormReadyState extends ConceptFormState {
     FinancialCard? selectedCard,
     PaymentMode? paymentMode,
     int? months,
+    DateTime? purchaseDate,
   }) {
     return ConceptFormReadyState(
       name: name ?? this.name,
@@ -53,6 +56,7 @@ class ConceptFormReadyState extends ConceptFormState {
       selectedCard: selectedCard ?? this.selectedCard,
       paymentMode: paymentMode ?? this.paymentMode,
       months: months ?? this.months,
+      purchaseDate: purchaseDate ?? this.purchaseDate,
     );
   }
 }

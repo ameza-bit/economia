@@ -25,6 +25,7 @@ class ConceptFormBloc extends Bloc<ConceptFormEvent, ConceptFormState> {
     on<ConceptFormUpdateSelectedCardEvent>(_onUpdateSelectedCard);
     on<ConceptFormUpdatePaymentModeEvent>(_onUpdatePaymentMode);
     on<ConceptFormUpdateMonthsEvent>(_onUpdateMonths);
+    on<ConceptFormUpdatePurchaseDateEvent>(_onUpdatePurchaseDate);
     on<ConceptFormLoadExistingConceptEvent>(_onLoadExistingConcept);
     on<ConceptFormSaveEvent>(_onSave);
     on<ConceptFormDeleteEvent>(_onDelete);
@@ -125,6 +126,16 @@ class ConceptFormBloc extends Bloc<ConceptFormEvent, ConceptFormState> {
     }
   }
 
+  void _onUpdatePurchaseDate(
+    ConceptFormUpdatePurchaseDateEvent event,
+    Emitter<ConceptFormState> emit,
+  ) {
+    if (state is ConceptFormReadyState) {
+      final currentState = state as ConceptFormReadyState;
+      emit(currentState.copyWith(purchaseDate: event.purchaseDate));
+    }
+  }
+
   void _onLoadExistingConcept(
     ConceptFormLoadExistingConceptEvent event,
     Emitter<ConceptFormState> emit,
@@ -142,6 +153,7 @@ class ConceptFormBloc extends Bloc<ConceptFormEvent, ConceptFormState> {
           selectedCard: conceptToEdit.card,
           paymentMode: conceptToEdit.paymentMode,
           months: conceptToEdit.months,
+          purchaseDate: conceptToEdit.purchaseDate,
         ),
       );
     } catch (e) {
@@ -218,6 +230,7 @@ class ConceptFormBloc extends Bloc<ConceptFormEvent, ConceptFormState> {
           card: currentState.selectedCard!,
           paymentMode: currentState.paymentMode,
           months: currentState.months,
+          purchaseDate: currentState.purchaseDate,
         );
 
         if (event.isEditing) {

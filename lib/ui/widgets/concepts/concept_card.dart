@@ -31,6 +31,11 @@ class ConceptCard extends StatelessWidget {
     final currentMonth = DateFormat('MMMM', 'es_MX').format(now);
     final currentYear = now.year.toString();
 
+    final purchaseDateFormatted = DateFormat(
+      'dd/MM/yyyy',
+      'es_MX',
+    ).format(concept.purchaseDate);
+
     return GeneralCard(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -142,6 +147,27 @@ class ConceptCard extends StatelessWidget {
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          // Fecha de compra
+          Row(
+            children: [
+              Icon(
+                Icons.date_range,
+                color: Theme.of(context).colorScheme.secondary,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Compra: $purchaseDateFormatted',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
