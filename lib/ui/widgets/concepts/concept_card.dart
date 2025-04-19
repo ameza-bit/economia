@@ -17,7 +17,7 @@ class ConceptCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Freidora de aire 5.5L',
+            concept.name,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w600,
@@ -26,7 +26,7 @@ class ConceptCard extends StatelessWidget {
             maxLines: 2,
           ),
           Text(
-            'Amazon - Banamex 799',
+            '${concept.store} - Banamex 799',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               color: Theme.of(context).colorScheme.primary.withAlpha(150),
               fontWeight: FontWeight.w400,
@@ -63,7 +63,7 @@ class ConceptCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '\$850.00',
+                concept.amount,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w900,

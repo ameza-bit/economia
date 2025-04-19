@@ -1,5 +1,6 @@
 import 'package:economia/data/blocs/concept_bloc.dart';
 import 'package:economia/data/events/concept_event.dart';
+import 'package:economia/data/repositories/concept_repository.dart';
 import 'package:economia/ui/views/concepts/concept_list_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,7 +16,10 @@ class ConceptListScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: BlocProvider(
-          create: (_) => ConceptBloc()..add(LoadConceptEvent()),
+          create:
+              (_) =>
+                  ConceptBloc(repository: ConceptRepository())
+                    ..add(LoadConceptEvent()),
           child: ConceptListView(),
         ),
       ),

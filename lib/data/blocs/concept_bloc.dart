@@ -5,10 +5,10 @@ import 'package:economia/data/states/concept_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ConceptBloc extends Bloc<ConceptEvent, ConceptState> {
-  final ConceptRepository conceptRepository = ConceptRepository();
+  final ConceptRepository repository;
   List<Concept> _concepts = [];
 
-  ConceptBloc() : super(InitialConceptState()) {
+  ConceptBloc({required this.repository}) : super(InitialConceptState()) {
     on<LoadConceptEvent>(_onLoadConcepts);
     on<RefreshConceptEvent>(_onRefreshConcepts);
   }
@@ -19,7 +19,7 @@ class ConceptBloc extends Bloc<ConceptEvent, ConceptState> {
   ) async {
     try {
       emit(LoadingConceptState());
-      _concepts = conceptRepository.getConceptsLocal();
+      _concepts = repository.getConceptsLocal();
       emit(LoadedConceptState(_concepts));
     } catch (e) {
       emit(ErrorConceptState("Error loading concepts: $e"));
@@ -32,7 +32,7 @@ class ConceptBloc extends Bloc<ConceptEvent, ConceptState> {
   ) async {
     try {
       emit(LoadingConceptState());
-      _concepts = conceptRepository.getConceptsLocal();
+      _concepts = repository.getConceptsLocal();
       emit(LoadedConceptState(_concepts));
     } catch (e) {
       emit(ErrorConceptState("Error loading concepts: $e"));

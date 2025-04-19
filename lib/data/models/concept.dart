@@ -5,7 +5,7 @@ class Concept {
   final String name;
   final String description;
   final String store;
-  final int total;
+  final double total;
   final PaymentMode paymentMode;
   final int months;
 
@@ -40,4 +40,22 @@ class Concept {
     'paymentMode': paymentMode.index,
     'months': months,
   };
+
+  String get amount => "\$${total.toStringAsFixed(2)}";
+
+  String get monthsText {
+    if (months == 1) {
+      return 'Mensualidad 1/$months';
+    } else {
+      return 'Mensualidad $months/$months';
+    }
+  }
+
+  String get paymentModeText {
+    if (paymentMode == PaymentMode.oneTime) {
+      return 'Pago único';
+    } else {
+      return 'Pago mensual';
+    }
+  }
 }

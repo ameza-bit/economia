@@ -21,7 +21,7 @@ class ConceptRepository {
     String json = jsonEncode(concepts);
     Preferences.setString('ND_concepts', json);
   }
-  
+
   void addConceptLocal(Concept concept) {
     List<Concept> concepts = getConceptsLocal();
     concepts.add(concept);
