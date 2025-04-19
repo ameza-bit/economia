@@ -1,3 +1,4 @@
+import 'package:economia/data/models/concept.dart';
 import 'package:economia/data/models/financial_card.dart';
 import 'package:economia/ui/screens/cards/card_form_screen.dart';
 import 'package:economia/ui/screens/cards/card_list_screen.dart';
@@ -18,8 +19,14 @@ class AppRoutes {
           GoRoute(
             name: ConceptFormScreen.routeName,
             path: ConceptFormScreen.routeName,
-            builder: (context, state) => const ConceptFormScreen(),
+            builder: (context, state) {
+              final concept = _getArgument<Concept>(state, 'concept');
+              final isEditing = concept != null;
+
+              return ConceptFormScreen(concept: concept, isEditing: isEditing);
+            },
           ),
+
           GoRoute(
             name: CardListScreen.routeName,
             path: CardListScreen.routeName,
@@ -29,11 +36,7 @@ class AppRoutes {
                 name: CardFormScreen.routeName,
                 path: CardFormScreen.routeName,
                 builder: (context, state) {
-                  // Obtener parámetros para edición si están presentes
-                  final card =
-                      state.extra is Map
-                          ? (state.extra as Map)['card'] as FinancialCard?
-                          : null;
+                  final card = _getArgument<FinancialCard>(state, 'card');
                   final isEditing = card != null;
 
                   return CardFormScreen(card: card, isEditing: isEditing);
@@ -53,5 +56,13 @@ class AppRoutes {
             body: Center(child: Text(state.error.toString(), maxLines: 5)),
           ),
     );
+  }
+
+  static T? _getArgument<T>(GoRouterState state, String name) {
+    final extra = state.extra;
+    if (extra is Map && extra.containsKey(name)) {
+      return extra[name] as T;
+    }
+    return null;
   }
 }
