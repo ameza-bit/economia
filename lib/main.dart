@@ -3,10 +3,13 @@ import 'package:economia/core/routes/app_routes.dart';
 import 'package:economia/core/services/preferences.dart';
 import 'package:economia/data/blocs/card_bloc.dart';
 import 'package:economia/data/blocs/concept_bloc.dart';
+import 'package:economia/data/blocs/recurring_payment_bloc.dart';
 import 'package:economia/data/events/card_event.dart';
 import 'package:economia/data/events/concept_event.dart';
+import 'package:economia/data/events/recurring_payment_event.dart';
 import 'package:economia/data/repositories/card_repository.dart';
 import 'package:economia/data/repositories/concept_repository.dart';
+import 'package:economia/data/repositories/recurring_payment_repository.dart';
 import 'package:economia/ui/themes/main_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -42,6 +45,12 @@ class MainApp extends StatelessWidget {
                   ConceptBloc(repository: ConceptRepository())
                     ..add(LoadConceptEvent()),
         ),
+        BlocProvider<RecurringPaymentBloc>(
+          create:
+              (context) =>
+                  RecurringPaymentBloc(repository: RecurringPaymentRepository())
+                    ..add(LoadRecurringPaymentEvent()),
+        ),
       ],
       child: MaterialApp.router(
         title: 'EconoMía',
@@ -52,10 +61,7 @@ class MainApp extends StatelessWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: [
-          const Locale('es', 'MX'),
-          const Locale('en', 'US'),
-        ],
+        supportedLocales: [const Locale('es', 'MX'), const Locale('en', 'US')],
         locale: const Locale('es', 'MX'),
       ),
     );

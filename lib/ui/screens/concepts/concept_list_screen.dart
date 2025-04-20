@@ -2,6 +2,7 @@ import 'package:economia/data/blocs/concept_bloc.dart';
 import 'package:economia/data/events/concept_event.dart';
 import 'package:economia/ui/screens/cards/card_list_screen.dart';
 import 'package:economia/ui/screens/concepts/concept_form_screen.dart';
+import 'package:economia/ui/screens/recurring_payments/recurring_payment_list_screen.dart';
 import 'package:economia/ui/views/concepts/concept_list_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -30,6 +31,13 @@ class ConceptListScreen extends StatelessWidget {
             icon: const Icon(Icons.credit_card),
             tooltip: 'Ver Tarjetas',
             onPressed: () => context.goNamed(CardListScreen.routeName),
+          ),
+          // Botón para ir a la lista de pagos recurrentes
+          IconButton(
+            icon: const Icon(Icons.repeat),
+            tooltip: 'Ver Pagos Recurrentes',
+            onPressed:
+                () => context.goNamed(RecurringPaymentListScreen.routeName),
           ),
           // Botón de actualizar
           IconButton(
