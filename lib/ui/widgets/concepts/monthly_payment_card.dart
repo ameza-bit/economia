@@ -1,7 +1,13 @@
+import 'package:economia/data/blocs/recurring_payment_bloc.dart';
 import 'package:economia/data/models/monthly_payment.dart';
+import 'package:economia/data/models/recurring_payment.dart';
+import 'package:economia/data/states/recurring_payment_state.dart';
 import 'package:economia/ui/screens/concepts/concept_form_screen.dart';
+import 'package:economia/ui/screens/recurring_payments/recurring_payment_form_screen.dart';
+import 'package:economia/ui/screens/recurring_payments/recurring_payment_list_screen.dart';
 import 'package:economia/ui/widgets/general/general_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 class MonthlyPaymentCard extends StatelessWidget {
@@ -314,17 +320,48 @@ class MonthlyPaymentCard extends StatelessWidget {
       ),
     );
   }
+
   void _goToConceptDetail(BuildContext context, dynamic concept) {
     // Detectar si es un pago recurrente (ID negativo)
     if (concept.id < 0) {
-      // Aquí debería ir la lógica para abrir el detalle de un pago recurrente
-      // usando el ID real (sin el signo negativo)
+      // Convertir el ID negativo a un ID de pago recurrente (string)
       String recurringPaymentId = concept.id.abs().toString();
 
-      // Buscar el pago recurrente por ID en el bloque
-      // (hay que obtener el pago real del bloque)
-      // Por ahora, solo navegamos a la lista de pagos recurrentes
-      context.goNamed('recurring_payment_list');
+      // Obtener el bloc de pagos recurrentes
+      final recurringPaymentBloc = context.read<RecurringPaymentBloc>();
+
+      // Obtener el estado actual del bloc
+      final state = recurringPaymentBloc.state;
+
+      if (state is LoadedRecurringPaymentState) {
+        // Buscar el pago recurrente por ID
+        final RecurringPayment? payment = state.payments
+            .where((p) => p.id == recurringPaymentId)
+            .firstOrNull;
+
+        if (payment != null) {
+          // Navegar a la pantalla de edición del pago recurrente
+          context.goNamed(
+            RecurringPaymentFormScreen.routeName,
+            extra: {'payment': payment, 'isEditing': true},
+          );
+        } else {
+          // Si no se encuentra el pago, navegar a la lista de pagos recurrentes
+          context.goNamed(RecurringPaymentListScreen.routeName);
+
+          // Opcionalmente, mostrar un mensaje
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'El pago recurrente no está disponible o ha sido eliminado',
+              ),
+            ),
+          );
+        }
+      } else {
+        // Si el estado no está cargado, navegar a la lista de pagos recurrentes
+        context.goNamed(RecurringPaymentListScreen.routeName);
+      }
     } else {
       // Para conceptos normales, usar la navegación existente
       context.goNamed(

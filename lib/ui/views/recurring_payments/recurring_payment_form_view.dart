@@ -560,87 +560,78 @@ class _RecurringPaymentFormViewState extends State<RecurringPaymentFormView> {
                     const SizedBox(height: 16),
 
                     // Fechas de inicio y fin
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 16,
                       children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => _selectDate(context, true),
-                            child: InputDecorator(
-                              decoration: const InputDecoration(
-                                labelText: 'Fecha inicio *',
-                                border: OutlineInputBorder(),
-                                helperText: 'Inicio del pago',
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    DateFormat(
-                                      'dd/MM/yyyy',
-                                      'es_MX',
-                                    ).format(state.startDate),
-                                    style: TextStyle(fontSize: 15),
-                                  ),
-                                  const Icon(Icons.calendar_today, size: 20),
-                                ],
-                              ),
+                        GestureDetector(
+                          onTap: () => _selectDate(context, true),
+                          child: InputDecorator(
+                            decoration: const InputDecoration(
+                              labelText: 'Fecha inicio *',
+                              border: OutlineInputBorder(),
+                              helperText: 'Inicio del pago',
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  DateFormat(
+                                    'dd/MM/yyyy',
+                                    'es_MX',
+                                  ).format(state.startDate),
+                                  style: TextStyle(fontSize: 15),
+                                ),
+                                const Icon(Icons.calendar_today, size: 20),
+                              ],
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => _selectDate(context, false),
-                            child: InputDecorator(
-                              decoration: const InputDecoration(
-                                labelText: 'Fecha fin (opcional)',
-                                border: OutlineInputBorder(),
-                                helperText: 'Fin del pago',
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    state.endDate != null
-                                        ? DateFormat(
-                                          'dd/MM/yyyy',
-                                          'es_MX',
-                                        ).format(state.endDate!)
-                                        : 'No definida',
-                                    style: TextStyle(fontSize: 15),
-                                  ),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (state.endDate != null)
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.clear,
-                                            size: 18,
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                          constraints: BoxConstraints(),
-                                          onPressed:
-                                              () => context
-                                                  .read<
-                                                    RecurringPaymentFormBloc
-                                                  >()
-                                                  .add(
-                                                    RecurringPaymentFormUpdateEndDateEvent(
-                                                      null,
-                                                    ),
+                        GestureDetector(
+                          onTap: () => _selectDate(context, false),
+                          child: InputDecorator(
+                            decoration: const InputDecoration(
+                              labelText: 'Fecha fin (opcional)',
+                              border: OutlineInputBorder(),
+                              helperText: 'Fin del pago',
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  state.endDate != null
+                                      ? DateFormat(
+                                        'dd/MM/yyyy',
+                                        'es_MX',
+                                      ).format(state.endDate!)
+                                      : 'No definida',
+                                  style: TextStyle(fontSize: 15),
+                                ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (state.endDate != null)
+                                      IconButton(
+                                        icon: const Icon(Icons.clear, size: 18),
+                                        padding: EdgeInsets.zero,
+                                        constraints: BoxConstraints(),
+                                        onPressed:
+                                            () => context
+                                                .read<
+                                                  RecurringPaymentFormBloc
+                                                >()
+                                                .add(
+                                                  RecurringPaymentFormUpdateEndDateEvent(
+                                                    null,
                                                   ),
-                                        ),
-                                      const Icon(
-                                        Icons.calendar_today,
-                                        size: 20,
+                                                ),
                                       ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                                    const Icon(Icons.calendar_today, size: 20),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ),
