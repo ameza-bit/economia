@@ -29,8 +29,6 @@ class ConceptCard extends StatelessWidget {
 
     // Obtener el mes y año actual para mostrar
     final now = DateTime.now();
-    final currentMonth = DateFormat('MMMM', 'es_MX').format(now);
-    final currentYear = now.year.toString();
 
     final purchaseDateFormatted = DateFormat(
       'dd/MM/yyyy',
@@ -282,27 +280,14 @@ class ConceptCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Información de fecha de pago según el modo de pago
                     Text(
-                      'Pago ${_capitalizeFirstLetter(currentMonth)} $currentYear',
+                      _getPaymentDaysText(concept),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
-                      maxLines: 1,
-                    ),
-
-                    // Modo de pago
-                    Text(
-                      concept.paymentMode == PaymentMode.oneTime
-                          ? 'Pago único'
-                          : concept.monthsText,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withAlpha(150),
-                        fontWeight: FontWeight.w400,
-                      ),
-                      maxLines: 1,
+                      maxLines: 3,
                     ),
 
                     // Chip de modo de pago
@@ -330,14 +315,55 @@ class ConceptCard extends StatelessWidget {
                 ),
               ),
 
-              // Monto
-              Text(
-                formattedAmount,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w900,
-                ),
-                maxLines: 1,
+              // Información de monto y monto pendiente
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // Monto total
+                  Text(
+                    formattedAmount,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    maxLines: 1,
+                  ),
+
+                  // Monto pendiente por pagar (si hay parcialidades)
+                  if (concept.paymentMode != PaymentMode.oneTime ||
+                      installmentsPaid < 1) ...[
+                    const SizedBox(height: 4),
+                    Builder(
+                      builder: (context) {
+                        // Calcular monto pendiente
+                        final double paidAmount =
+                            concept.paymentMode == PaymentMode.oneTime
+                                ? (installmentsPaid > 0 ? concept.total : 0)
+                                : (concept.total / totalInstallments) *
+                                    installmentsPaid;
+                        final double remainingAmount =
+                            concept.total - paidAmount;
+
+                        // Formatear monto pendiente
+                        final remainingFormatted = currencyFormat.format(
+                          remainingAmount,
+                        );
+
+                        return Text(
+                          'Pendiente: $remainingFormatted',
+                          style: TextStyle(
+                            color:
+                                remainingAmount > 0
+                                    ? Colors.orange
+                                    : Colors.green.shade700,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
@@ -426,11 +452,6 @@ class ConceptCard extends StatelessWidget {
   }
 
   // Métodos auxiliares
-  String _capitalizeFirstLetter(String text) {
-    if (text.isEmpty) return '';
-    return text[0].toUpperCase() + text.substring(1);
-  }
-
   String _getPaymentModeText(PaymentMode mode) {
     switch (mode) {
       case PaymentMode.weekly:
@@ -455,5 +476,59 @@ class ConceptCard extends StatelessWidget {
       default:
         return Colors.grey.shade200;
     }
+  }
+}
+
+// Método para obtener el texto de días de pago según el modo
+String _getPaymentDaysText(Concept concept) {
+  final paymentDay = concept.card.paymentDay;
+
+  switch (concept.paymentMode) {
+    case PaymentMode.oneTime:
+      // Para pago único, mostrar la fecha específica de pago
+      final paymentDate = PaymentCalculator.calculatePaymentDate(concept, 0);
+      return 'Pago: día ${paymentDate.day}/${paymentDate.month}/${paymentDate.year}';
+
+    case PaymentMode.monthly:
+      // Para pago mensual, mostrar el día específico de cada mes
+      return 'Pago: día $paymentDay de cada mes';
+
+    case PaymentMode.biweekly:
+      // Para pago quincenal, calcular los dos días del mes
+      int secondPaymentDay = paymentDay + 15;
+      // Ajustar si el segundo día excede los 28 días (para considerar meses cortos)
+      if (secondPaymentDay > 28) {
+        return 'Pago: días $paymentDay y fin de mes';
+      } else {
+        return 'Pago: días $paymentDay y $secondPaymentDay del mes';
+      }
+
+    case PaymentMode.weekly:
+      // Para pago semanal, indicar que es cada semana en ese día
+      final paymentDate = PaymentCalculator.calculatePaymentDate(concept, 0);
+      final weekday = _getWeekdayName(paymentDate.weekday);
+      return 'Pago: cada $weekday (día $paymentDay)';
+  }
+}
+
+// Método para obtener el nombre del día de la semana
+String _getWeekdayName(int weekday) {
+  switch (weekday) {
+    case DateTime.monday:
+      return 'lunes';
+    case DateTime.tuesday:
+      return 'martes';
+    case DateTime.wednesday:
+      return 'miércoles';
+    case DateTime.thursday:
+      return 'jueves';
+    case DateTime.friday:
+      return 'viernes';
+    case DateTime.saturday:
+      return 'sábado';
+    case DateTime.sunday:
+      return 'domingo';
+    default:
+      return '';
   }
 }

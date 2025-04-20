@@ -57,9 +57,9 @@ class Concept {
 
   String get monthsText {
     if (months == 1) {
-      return 'Mensualidad 1/$months';
+      return 'Parcialidad 1/$months';
     } else {
-      return 'Mensualidad $months/$months';
+      return 'Parcialidad $months/$months';
     }
   }
 
