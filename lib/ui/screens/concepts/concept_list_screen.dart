@@ -2,7 +2,7 @@ import 'package:economia/data/blocs/concept_bloc.dart';
 import 'package:economia/data/events/concept_event.dart';
 import 'package:economia/ui/screens/cards/card_list_screen.dart';
 import 'package:economia/ui/screens/concepts/concept_form_screen.dart';
-import 'package:economia/ui/screens/recurring_payments/recurring_payment_list_screen.dart';
+import 'package:economia/ui/screens/recurring_payments/recurring_payment_form_screen.dart';
 import 'package:economia/ui/views/concepts/concept_list_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,13 +32,6 @@ class ConceptListScreen extends StatelessWidget {
             tooltip: 'Ver Tarjetas',
             onPressed: () => context.goNamed(CardListScreen.routeName),
           ),
-          // Botón para ir a la lista de pagos recurrentes
-          IconButton(
-            icon: const Icon(Icons.repeat),
-            tooltip: 'Ver Pagos Recurrentes',
-            onPressed:
-                () => context.goNamed(RecurringPaymentListScreen.routeName),
-          ),
           // Botón de actualizar
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -52,11 +45,31 @@ class ConceptListScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: ConceptListView(),
       ),
-      floatingActionButton: FloatingActionButton(
-        key: const Key('add_concept'),
-        heroTag: 'add_concept',
-        child: const Icon(Icons.add_outlined),
-        onPressed: () => context.goNamed(ConceptFormScreen.routeName),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Botón para agregar pago recurrente
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: FloatingActionButton(
+              key: const Key('add_recurring_payment'),
+              heroTag: 'add_recurring_payment',
+              backgroundColor: Colors.purple.shade100,
+              onPressed:
+                  () => context.goNamed(RecurringPaymentFormScreen.routeName),
+              tooltip: 'Agregar Pago Recurrente',
+              child: const Icon(Icons.alarm_add_outlined),
+            ),
+          ),
+          // Botón para agregar concepto
+          FloatingActionButton(
+            key: const Key('add_concept'),
+            heroTag: 'add_concept',
+            onPressed: () => context.goNamed(ConceptFormScreen.routeName),
+            tooltip: 'Agregar Concepto',
+            child: const Icon(Icons.add_road_outlined),
+          ),
+        ],
       ),
     );
   }

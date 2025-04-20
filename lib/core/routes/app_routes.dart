@@ -6,7 +6,6 @@ import 'package:economia/ui/screens/cards/card_list_screen.dart';
 import 'package:economia/ui/screens/concepts/concept_form_screen.dart';
 import 'package:economia/ui/screens/concepts/concept_list_screen.dart';
 import 'package:economia/ui/screens/recurring_payments/recurring_payment_form_screen.dart';
-import 'package:economia/ui/screens/recurring_payments/recurring_payment_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -29,6 +28,19 @@ class AppRoutes {
               return ConceptFormScreen(concept: concept, isEditing: isEditing);
             },
           ),
+          GoRoute(
+            name: RecurringPaymentFormScreen.routeName,
+            path: RecurringPaymentFormScreen.routeName,
+            builder: (context, state) {
+              final payment = _getArgument<RecurringPayment>(state, 'payment');
+              final isEditing = payment != null;
+
+              return RecurringPaymentFormScreen(
+                payment: payment,
+                isEditing: isEditing,
+              );
+            },
+          ),
 
           GoRoute(
             name: CardListScreen.routeName,
@@ -43,31 +55,6 @@ class AppRoutes {
                   final isEditing = card != null;
 
                   return CardFormScreen(card: card, isEditing: isEditing);
-                },
-              ),
-            ],
-          ),
-
-          // Nuevas rutas para pagos recurrentes
-          GoRoute(
-            name: RecurringPaymentListScreen.routeName,
-            path: RecurringPaymentListScreen.routeName,
-            builder: (context, state) => const RecurringPaymentListScreen(),
-            routes: [
-              GoRoute(
-                name: RecurringPaymentFormScreen.routeName,
-                path: RecurringPaymentFormScreen.routeName,
-                builder: (context, state) {
-                  final payment = _getArgument<RecurringPayment>(
-                    state,
-                    'payment',
-                  );
-                  final isEditing = payment != null;
-
-                  return RecurringPaymentFormScreen(
-                    payment: payment,
-                    isEditing: isEditing,
-                  );
                 },
               ),
             ],
