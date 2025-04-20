@@ -169,6 +169,10 @@ class MonthlyPaymentCard extends StatelessWidget {
     ConceptPayment payment, {
     bool isPaid = false,
   }) {
+    // Formatear la fecha de pago
+    final paymentDateFormatted =
+        '${payment.paymentDate.day}/${payment.paymentDate.month}/${payment.paymentDate.year}';
+
     return GestureDetector(
       onTap: () => _goToConceptDetail(context, payment.concept),
       child: Padding(
@@ -211,14 +215,34 @@ class MonthlyPaymentCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          payment.installmentText,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.secondary,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              payment.installmentText,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.secondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            // Fecha de pago
+                            Text(
+                              'Fecha de pago: $paymentDateFormatted',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.copyWith(
+                                color:
+                                    isPaid
+                                        ? Colors.green.shade700
+                                        : Colors.orange,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

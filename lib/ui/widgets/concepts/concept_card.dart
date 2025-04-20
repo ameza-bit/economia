@@ -5,6 +5,7 @@ import 'package:economia/data/events/concept_form_event.dart';
 import 'package:economia/data/models/concept.dart';
 import 'package:economia/data/repositories/card_repository.dart';
 import 'package:economia/data/repositories/concept_repository.dart';
+import 'package:economia/data/services/payment_calculator.dart';
 import 'package:economia/ui/screens/concepts/concept_form_screen.dart';
 import 'package:economia/ui/widgets/general/general_card.dart';
 import 'package:flutter/material.dart';
@@ -35,6 +36,27 @@ class ConceptCard extends StatelessWidget {
       'dd/MM/yyyy',
       'es_MX',
     ).format(concept.purchaseDate);
+
+    // Calcular parcialidades pagadas
+    int installmentsPaid = 0;
+    int totalInstallments = concept.months;
+
+    if (concept.paymentMode != PaymentMode.oneTime && concept.months > 1) {
+      final payments = PaymentCalculator.calculatePaymentsForConcept(concept);
+      installmentsPaid =
+          payments.where((payment) => payment.paymentDate.isBefore(now)).length;
+    }
+
+    // Texto de parcialidades pagadas
+    String installmentsText = '';
+    if (concept.paymentMode == PaymentMode.oneTime) {
+      installmentsText = 'Pago único';
+    } else if (installmentsPaid > 0) {
+      installmentsText =
+          'Pagado: $installmentsPaid de $totalInstallments parcialidades';
+    } else {
+      installmentsText = 'Pendiente: 0 de $totalInstallments parcialidades';
+    }
 
     return GeneralCard(
       width: double.infinity,
@@ -172,6 +194,53 @@ class ConceptCard extends StatelessWidget {
               ),
             ],
           ),
+
+          // Progreso de parcialidades
+          if (concept.paymentMode != PaymentMode.oneTime) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  installmentsPaid > 0
+                      ? Icons.check_circle_outline
+                      : Icons.pending_outlined,
+                  color:
+                      installmentsPaid > 0
+                          ? Colors.green.shade700
+                          : Colors.orange,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  installmentsText,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color:
+                        installmentsPaid > 0
+                            ? Colors.green.shade700
+                            : Colors.orange,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Barra de progreso para parcialidades
+            if (concept.months > 1) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: installmentsPaid / totalInstallments,
+                  backgroundColor: Colors.grey.shade300,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    installmentsPaid > 0
+                        ? Colors.green.shade700
+                        : Colors.orange,
+                  ),
+                  minHeight: 8,
+                ),
+              ),
+            ],
+          ],
 
           // Mostrar descripción si existe
           if (concept.description.isNotEmpty) ...[

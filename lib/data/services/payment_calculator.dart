@@ -158,4 +158,26 @@ class PaymentCalculator {
   static int daysInMonth(int year, int month) {
     return DateTime(year, month + 1, 0).day;
   }
+
+  /// Calcula cuántas cuotas se han pagado de un concepto hasta la fecha actual
+  static int getPaidInstallments(Concept concept) {
+    if (concept.paymentMode == PaymentMode.oneTime) {
+      // Para pagos únicos, o está pagado (1) o no (0)
+      DateTime paymentDate = calculatePaymentDate(concept, 0);
+      return DateTime.now().isAfter(paymentDate) ? 1 : 0;
+    } else {
+      // Para pagos a plazos, contar cuántas cuotas ya pasaron su fecha de vencimiento
+      List<ConceptPayment> payments = calculatePaymentsForConcept(concept);
+      int paidCount = 0;
+      final now = DateTime.now();
+
+      for (var payment in payments) {
+        if (now.isAfter(payment.paymentDate)) {
+          paidCount++;
+        }
+      }
+
+      return paidCount;
+    }
+  }
 }
