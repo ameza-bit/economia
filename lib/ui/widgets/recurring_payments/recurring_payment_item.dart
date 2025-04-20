@@ -6,6 +6,7 @@ import 'package:economia/data/events/recurring_payment_form_event.dart';
 import 'package:economia/data/models/recurring_payment.dart';
 import 'package:economia/data/repositories/card_repository.dart';
 import 'package:economia/data/repositories/recurring_payment_repository.dart';
+import 'package:economia/data/services/recurring_payment_calculator.dart';
 import 'package:economia/data/states/recurring_payment_form_state.dart';
 import 'package:economia/ui/screens/recurring_payments/recurring_payment_form_screen.dart';
 import 'package:economia/ui/widgets/general/general_card.dart';
@@ -42,6 +43,12 @@ class RecurringPaymentItem extends StatelessWidget {
       recurringDescription =
           'Días ${payment.specificDay} y ${payment.secondSpecificDay} de cada mes';
     }
+    // Calcular parcialidades pagadas y totales
+    int completedPayments =
+        RecurringPaymentCalculator.getCompletedPaymentsCount(payment);
+    int totalPayments = RecurringPaymentCalculator.getTotalPaymentsCount(
+      payment,
+    );
 
     return GeneralCard(
       width: double.infinity,
@@ -224,6 +231,50 @@ class RecurringPaymentItem extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ],
+
+          if (payment.endDate != null && isActive && totalPayments > 0) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  completedPayments > 0
+                      ? Icons.check_circle_outline
+                      : Icons.pending_outlined,
+                  size: 18,
+                  color:
+                      completedPayments > 0
+                          ? Colors.green.shade700
+                          : Colors.orange,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Pagado: $completedPayments de $totalPayments pagos',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color:
+                          completedPayments > 0
+                              ? Colors.green.shade700
+                              : Colors.orange,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Barra de progreso
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: completedPayments / totalPayments,
+                backgroundColor: Colors.grey.shade300,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  completedPayments > 0 ? Colors.green.shade700 : Colors.orange,
+                ),
+                minHeight: 8,
+              ),
             ),
           ],
 

@@ -304,4 +304,41 @@ class RecurringPaymentCalculator {
   static int _daysInMonth(int year, int month) {
     return DateTime(year, month + 1, 0).day;
   }
+
+  // Método para calcular cuántos pagos se han realizado de un pago recurrente
+  static int getCompletedPaymentsCount(RecurringPayment payment) {
+    final now = DateTime.now();
+
+    // Si la fecha de inicio es futura, no hay pagos realizados
+    if (payment.startDate.isAfter(now)) {
+      return 0;
+    }
+
+    // Calcular todas las fechas de pago desde el inicio hasta ahora
+    List<DateTime> paymentDates = calculatePaymentDatesForPeriod(
+      payment,
+      payment.startDate,
+      now,
+    );
+
+    // Contar cuántos pagos han pasado (son anteriores a la fecha actual)
+    return paymentDates.where((date) => date.isBefore(now)).length;
+  }
+
+  // Método para calcular el número total de pagos esperados
+  static int getTotalPaymentsCount(RecurringPayment payment) {
+    // Si no hay fecha final, el total es indefinido (retornamos -1)
+    if (payment.endDate == null) {
+      return -1;
+    }
+
+    // Calcular todas las fechas de pago desde el inicio hasta la fecha final
+    List<DateTime> paymentDates = calculatePaymentDatesForPeriod(
+      payment,
+      payment.startDate,
+      payment.endDate!,
+    );
+
+    return paymentDates.length;
+  }
 }
