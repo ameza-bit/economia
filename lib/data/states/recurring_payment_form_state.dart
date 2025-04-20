@@ -28,6 +28,7 @@ class RecurringPaymentFormReadyState extends RecurringPaymentFormState {
   final RecurrenceType recurrenceType;
   final PaymentDateType paymentDateType;
   final int specificDay;
+  final int? secondSpecificDay;
   final WeekDay? weekDay;
   final int weekDayOrdinal;
   final DateTime startDate;
@@ -44,6 +45,7 @@ class RecurringPaymentFormReadyState extends RecurringPaymentFormState {
     this.recurrenceType = RecurrenceType.monthly,
     this.paymentDateType = PaymentDateType.specificDay,
     this.specificDay = 1,
+    this.secondSpecificDay,
     this.weekDay = WeekDay.monday,
     this.weekDayOrdinal = 1,
     DateTime? startDate,
@@ -61,6 +63,7 @@ class RecurringPaymentFormReadyState extends RecurringPaymentFormState {
     RecurrenceType? recurrenceType,
     PaymentDateType? paymentDateType,
     int? specificDay,
+    int? secondSpecificDay,
     WeekDay? weekDay,
     int? weekDayOrdinal,
     DateTime? startDate,
@@ -77,6 +80,7 @@ class RecurringPaymentFormReadyState extends RecurringPaymentFormState {
       recurrenceType: recurrenceType ?? this.recurrenceType,
       paymentDateType: paymentDateType ?? this.paymentDateType,
       specificDay: specificDay ?? this.specificDay,
+      secondSpecificDay: secondSpecificDay ?? this.secondSpecificDay,
       weekDay: weekDay ?? this.weekDay,
       weekDayOrdinal: weekDayOrdinal ?? this.weekDayOrdinal,
       startDate: startDate ?? this.startDate,

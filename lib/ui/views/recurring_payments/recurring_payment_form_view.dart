@@ -224,6 +224,73 @@ class _RecurringPaymentFormViewState extends State<RecurringPaymentFormView> {
     }
   }
 
+  // Método para seleccionar el segundo día de pago quincenal
+  Future<void> _selectSecondDay(BuildContext context) async {
+    final RecurringPaymentFormReadyState state =
+        context.read<RecurringPaymentFormBloc>().state
+            as RecurringPaymentFormReadyState;
+    final initialDay = state.secondSpecificDay ?? state.specificDay + 15;
+
+    final int? selectedDay = await showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        int tempDay = initialDay;
+        return AlertDialog(
+          title: Text('Segundo día de pago quincenal'),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Seleccione el segundo día del mes:'),
+                  SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.remove),
+                        onPressed:
+                            tempDay > 1
+                                ? () => setState(() => tempDay--)
+                                : null,
+                      ),
+                      SizedBox(width: 16),
+                      Text('$tempDay', style: TextStyle(fontSize: 24)),
+                      SizedBox(width: 16),
+                      IconButton(
+                        icon: Icon(Icons.add),
+                        onPressed:
+                            tempDay < 31
+                                ? () => setState(() => tempDay++)
+                                : null,
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, tempDay),
+              child: Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (selectedDay != null && context.mounted) {
+      context.read<RecurringPaymentFormBloc>().add(
+        RecurringPaymentFormUpdateSecondSpecificDayEvent(selectedDay),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -275,6 +342,10 @@ class _RecurringPaymentFormViewState extends State<RecurringPaymentFormView> {
             _providerController.text = state.provider;
             _amountController.text = state.amount;
             _categoryController.text = state.category;
+
+            bool showSecondDaySelector =
+                state.recurrenceType == RecurrenceType.biweekly &&
+                state.paymentDateType == PaymentDateType.specificDay;
 
             return Padding(
               padding: const EdgeInsets.all(24),
@@ -655,6 +726,55 @@ class _RecurringPaymentFormViewState extends State<RecurringPaymentFormView> {
                           ),
                         ),
                       ),
+
+                    // Añadir el selector de segundo día para pagos quincenales
+                    if (showSecondDaySelector) ...[
+                      const SizedBox(height: 16),
+                      GestureDetector(
+                        onTap: () => _selectSecondDay(context),
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Segundo Día de Pago Quincenal *',
+                            border: OutlineInputBorder(),
+                            helperText:
+                                'Segundo día específico para pagos quincenales',
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                state.secondSpecificDay != null
+                                    ? 'Día ${state.secondSpecificDay}'
+                                    : 'Seleccione el segundo día',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              const Icon(Icons.edit_calendar),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Mensaje informativo para pagos quincenales
+                      const SizedBox(height: 8),
+                      Card(
+                        color: Colors.blue.shade50,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline, color: Colors.blue),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Para pagos quincenales, se realizará un pago el día ${state.specificDay} y otro el día ${state.secondSpecificDay ?? "..."} de cada mes.',
+                                  style: TextStyle(color: Colors.blue.shade800),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
 
                     if (state.paymentDateType == PaymentDateType.weekDay)
                       // Selección de día de la semana y ordinal

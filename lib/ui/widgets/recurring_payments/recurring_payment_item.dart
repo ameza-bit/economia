@@ -1,5 +1,6 @@
 // lib/ui/widgets/recurring_payments/recurring_payment_item.dart
 import 'package:economia/data/blocs/recurring_payment_form_bloc.dart';
+import 'package:economia/data/enums/payment_date_type.dart';
 import 'package:economia/data/enums/recurrence_type.dart';
 import 'package:economia/data/events/recurring_payment_form_event.dart';
 import 'package:economia/data/models/recurring_payment.dart';
@@ -33,6 +34,14 @@ class RecurringPaymentItem extends StatelessWidget {
 
     final bool isActive = payment.isActive;
     final bool isPastDue = payment.nextPaymentDate.isBefore(DateTime.now());
+
+    String recurringDescription = payment.getPaymentDateDescription();
+    if (payment.recurrenceType == RecurrenceType.biweekly &&
+        payment.paymentDateType == PaymentDateType.specificDay &&
+        payment.secondSpecificDay != null) {
+      recurringDescription =
+          'Días ${payment.specificDay} y ${payment.secondSpecificDay} de cada mes';
+    }
 
     return GeneralCard(
       width: double.infinity,
@@ -255,7 +264,7 @@ class RecurringPaymentItem extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(left: 26),
                       child: Text(
-                        payment.getPaymentDateDescription(),
+                        recurringDescription,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontStyle: FontStyle.italic,
                           color: isActive ? Colors.black54 : Colors.grey,

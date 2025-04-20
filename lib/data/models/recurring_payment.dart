@@ -10,17 +10,18 @@ class RecurringPayment {
   final String description;
   final String provider;
   final double amount;
-  final FinancialCard? card; // Opcional, porque podría pagarse en efectivo
+  final FinancialCard? card;
   final RecurrenceType recurrenceType;
   final PaymentDateType paymentDateType;
-  final int specificDay; // Ej: día 15 del mes
-  final WeekDay? weekDay; // Ej: Lunes
-  final int weekDayOrdinal; // Ej: 1er, 2do, 3er, 4to (o último si es -1)
+  final int specificDay; // Primer día específico
+  final int? secondSpecificDay; // Segundo día específico para pagos quincenales
+  final WeekDay? weekDay;
+  final int weekDayOrdinal;
   final DateTime startDate;
-  final DateTime? endDate; // Opcional, si hay fecha de finalización
+  final DateTime? endDate;
   final bool isActive;
-  final String category; // Categoría del pago (ej: Servicios, Educación)
-  final DateTime nextPaymentDate; // Próxima fecha de pago calculada
+  final String category;
+  final DateTime nextPaymentDate;
 
   RecurringPayment({
     required this.id,
@@ -32,6 +33,7 @@ class RecurringPayment {
     required this.recurrenceType,
     required this.paymentDateType,
     this.specificDay = 1,
+    this.secondSpecificDay, // Nuevo campo para el segundo día
     this.weekDay,
     this.weekDayOrdinal = 1,
     required this.startDate,
@@ -49,11 +51,10 @@ class RecurringPayment {
       provider: json['provider'] ?? '',
       amount: json['amount'] ?? 0.0,
       card: json['card'] != null ? FinancialCard.fromJson(json['card']) : null,
-      recurrenceType:
-          RecurrenceType.values[json['recurrenceType'] ??
-              3], // Default to monthly
+      recurrenceType: RecurrenceType.values[json['recurrenceType'] ?? 3],
       paymentDateType: PaymentDateType.values[json['paymentDateType'] ?? 0],
       specificDay: json['specificDay'] ?? 1,
+      secondSpecificDay: json['secondSpecificDay'], // Añadir este campo
       weekDay: json['weekDay'] != null ? WeekDay.values[json['weekDay']] : null,
       weekDayOrdinal: json['weekDayOrdinal'] ?? 1,
       startDate: DateTime.tryParse(json['startDate'] ?? '') ?? DateTime.now(),
@@ -76,6 +77,7 @@ class RecurringPayment {
     'recurrenceType': recurrenceType.index,
     'paymentDateType': paymentDateType.index,
     'specificDay': specificDay,
+    'secondSpecificDay': secondSpecificDay, // Añadir este campo
     'weekDay': weekDay?.index,
     'weekDayOrdinal': weekDayOrdinal,
     'startDate': startDate.toIso8601String(),
@@ -96,6 +98,7 @@ class RecurringPayment {
     RecurrenceType? recurrenceType,
     PaymentDateType? paymentDateType,
     int? specificDay,
+    int? secondSpecificDay,
     WeekDay? weekDay,
     int? weekDayOrdinal,
     DateTime? startDate,
@@ -114,6 +117,8 @@ class RecurringPayment {
       recurrenceType: recurrenceType ?? this.recurrenceType,
       paymentDateType: paymentDateType ?? this.paymentDateType,
       specificDay: specificDay ?? this.specificDay,
+      secondSpecificDay:
+          secondSpecificDay ?? this.secondSpecificDay, // Actualizar
       weekDay: weekDay ?? this.weekDay,
       weekDayOrdinal: weekDayOrdinal ?? this.weekDayOrdinal,
       startDate: startDate ?? this.startDate,
@@ -132,6 +137,10 @@ class RecurringPayment {
   String getPaymentDateDescription() {
     switch (paymentDateType) {
       case PaymentDateType.specificDay:
+        if (recurrenceType == RecurrenceType.biweekly &&
+            secondSpecificDay != null) {
+          return 'Días $specificDay y $secondSpecificDay de cada mes';
+        }
         return 'Día $specificDay de cada ${_getRecurrencePeriod()}';
       case PaymentDateType.weekDay:
         return '${_getOrdinalText()} ${weekDay?.displayName ?? "día"} de cada ${_getRecurrencePeriod()}';

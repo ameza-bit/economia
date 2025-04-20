@@ -1,5 +1,6 @@
 import 'package:economia/data/blocs/recurring_payment_bloc.dart';
 import 'package:economia/data/enums/payment_date_type.dart';
+import 'package:economia/data/enums/recurrence_type.dart';
 import 'package:economia/data/events/recurring_payment_event.dart';
 import 'package:economia/data/events/recurring_payment_form_event.dart';
 import 'package:economia/data/models/recurring_payment.dart';
@@ -30,6 +31,9 @@ class RecurringPaymentFormBloc
       _onUpdatePaymentDateType,
     );
     on<RecurringPaymentFormUpdateSpecificDayEvent>(_onUpdateSpecificDay);
+    on<RecurringPaymentFormUpdateSecondSpecificDayEvent>(
+      _onUpdateSecondSpecificDay,
+    );
     on<RecurringPaymentFormUpdateWeekDayEvent>(_onUpdateWeekDay);
     on<RecurringPaymentFormUpdateWeekDayOrdinalEvent>(_onUpdateWeekDayOrdinal);
     on<RecurringPaymentFormUpdateStartDateEvent>(_onUpdateStartDate);
@@ -137,6 +141,16 @@ class RecurringPaymentFormBloc
     if (state is RecurringPaymentFormReadyState) {
       final currentState = state as RecurringPaymentFormReadyState;
       emit(currentState.copyWith(specificDay: event.day));
+    }
+  }
+
+  void _onUpdateSecondSpecificDay(
+    RecurringPaymentFormUpdateSecondSpecificDayEvent event,
+    Emitter<RecurringPaymentFormState> emit,
+  ) {
+    if (state is RecurringPaymentFormReadyState) {
+      final currentState = state as RecurringPaymentFormReadyState;
+      emit(currentState.copyWith(secondSpecificDay: event.day));
     }
   }
 
@@ -301,6 +315,31 @@ class RecurringPaymentFormBloc
           return;
         }
 
+        // Nueva validación para pagos quincenales
+        if (currentState.recurrenceType == RecurrenceType.biweekly &&
+            currentState.paymentDateType == PaymentDateType.specificDay) {
+          if (currentState.secondSpecificDay == null) {
+            emit(
+              RecurringPaymentFormErrorState(
+                'Para pagos quincenales debe especificar el segundo día de pago',
+              ),
+            );
+            emit(currentState);
+            return;
+          }
+
+          // Verificar que los días sean diferentes
+          if (currentState.specificDay == currentState.secondSpecificDay) {
+            emit(
+              RecurringPaymentFormErrorState(
+                'Los dos días de pago quincenal deben ser diferentes',
+              ),
+            );
+            emit(currentState);
+            return;
+          }
+        }
+
         // Cambiar al estado de carga
         emit(RecurringPaymentFormLoadingState());
 
@@ -321,6 +360,8 @@ class RecurringPaymentFormBloc
           recurrenceType: currentState.recurrenceType,
           paymentDateType: currentState.paymentDateType,
           specificDay: currentState.specificDay,
+          secondSpecificDay:
+              currentState.secondSpecificDay, // Incluir este campo
           weekDay: currentState.weekDay,
           weekDayOrdinal: currentState.weekDayOrdinal,
           startDate: currentState.startDate,
@@ -328,6 +369,7 @@ class RecurringPaymentFormBloc
           isActive: currentState.isActive,
           category: currentState.category,
           nextPaymentDate: RecurringPaymentCalculator.calculateNextPaymentDate(
+            // Aquí también incluir el segundo día específico
             RecurringPayment(
               id: id,
               name: currentState.name,
@@ -336,6 +378,7 @@ class RecurringPaymentFormBloc
               recurrenceType: currentState.recurrenceType,
               paymentDateType: currentState.paymentDateType,
               specificDay: currentState.specificDay,
+              secondSpecificDay: currentState.secondSpecificDay, // Incluir
               weekDay: currentState.weekDay,
               weekDayOrdinal: currentState.weekDayOrdinal,
               startDate: currentState.startDate,

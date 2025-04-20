@@ -69,6 +69,50 @@ class RecurringPaymentCalculator {
     List<DateTime> dates = [];
     DateTime currentDate = startDate;
 
+    // Caso especial para pagos quincenales con dos días específicos
+    if (payment.recurrenceType == RecurrenceType.biweekly &&
+        payment.paymentDateType == PaymentDateType.specificDay &&
+        payment.secondSpecificDay != null) {
+      while (currentDate.isBefore(endDate)) {
+        // Obtener el año y mes actuales
+        int year = currentDate.year;
+        int month = currentDate.month;
+        int daysInMonth = _daysInMonth(year, month);
+
+        // Primer día de pago en el mes
+        int firstDay =
+            payment.specificDay > daysInMonth
+                ? daysInMonth
+                : payment.specificDay;
+        DateTime firstPayment = DateTime(year, month, firstDay);
+
+        // Segundo día de pago en el mes
+        int secondDay =
+            payment.secondSpecificDay! > daysInMonth
+                ? daysInMonth
+                : payment.secondSpecificDay!;
+        DateTime secondPayment = DateTime(year, month, secondDay);
+
+        // Añadir primer día si está dentro del rango
+        if (firstPayment.isAfter(currentDate) &&
+            firstPayment.isBefore(endDate)) {
+          dates.add(firstPayment);
+        }
+
+        // Añadir segundo día si está dentro del rango
+        if (secondPayment.isAfter(currentDate) &&
+            secondPayment.isBefore(endDate)) {
+          dates.add(secondPayment);
+        }
+
+        // Avanzar al siguiente mes
+        currentDate = DateTime(year, month + 1, 1);
+      }
+
+      return dates;
+    }
+
+    // Código existente para otros casos...
     while (currentDate.isBefore(endDate)) {
       DateTime nextDate = calculateNextPaymentDate(payment, currentDate);
 
@@ -89,8 +133,6 @@ class RecurringPaymentCalculator {
     return dates;
   }
 
-  // Métodos privados para calcular fechas según el tipo de recurrencia
-
   // Calcula la próxima fecha para un día específico del mes
   static DateTime _calculateNextSpecificDay(
     RecurringPayment payment,
@@ -105,12 +147,39 @@ class RecurringPaymentCalculator {
 
     DateTime targetDate = DateTime(baseDate.year, baseDate.month, day);
 
-    // Si la fecha objetivo ya pasó, avanzamos según la recurrencia
+    // Manejo especial para pagos quincenales con dos días específicos
+    if (payment.recurrenceType == RecurrenceType.biweekly &&
+        payment.paymentDateType == PaymentDateType.specificDay &&
+        payment.secondSpecificDay != null) {
+      int secondDay = payment.secondSpecificDay!;
+      secondDay = secondDay > daysInMonth ? daysInMonth : secondDay;
+      DateTime secondTargetDate = DateTime(
+        baseDate.year,
+        baseDate.month,
+        secondDay,
+      );
+
+      // Si estamos después del primer día pero antes del segundo, elegir el segundo día
+      if (fromDate.isAfter(targetDate) && fromDate.isBefore(secondTargetDate)) {
+        return secondTargetDate;
+      }
+      // Si estamos después de ambos días, ir al primer día del siguiente mes
+      else if (fromDate.isAfter(targetDate) &&
+          fromDate.isAfter(secondTargetDate)) {
+        DateTime nextMonth = DateTime(baseDate.year, baseDate.month + 1, 1);
+        return DateTime(nextMonth.year, nextMonth.month, day);
+      }
+      // De lo contrario, elegir el primer día
+      else {
+        return targetDate;
+      }
+    }
+
+    // Código existente para otros casos...
     if (targetDate.isBefore(fromDate) ||
         targetDate.isAtSameMomentAs(fromDate)) {
       targetDate = _advanceByRecurrenceType(targetDate, payment.recurrenceType);
 
-      // Ajustar el día si excede el máximo del nuevo mes
       daysInMonth = _daysInMonth(targetDate.year, targetDate.month);
       day =
           payment.specificDay > daysInMonth ? daysInMonth : payment.specificDay;

@@ -55,6 +55,12 @@ class RecurringPaymentFormUpdateSpecificDayEvent
   RecurringPaymentFormUpdateSpecificDayEvent(this.day);
 }
 
+class RecurringPaymentFormUpdateSecondSpecificDayEvent
+    extends RecurringPaymentFormEvent {
+  final int? day;
+  RecurringPaymentFormUpdateSecondSpecificDayEvent(this.day);
+}
+
 class RecurringPaymentFormUpdateWeekDayEvent extends RecurringPaymentFormEvent {
   final WeekDay weekDay;
   RecurringPaymentFormUpdateWeekDayEvent(this.weekDay);
