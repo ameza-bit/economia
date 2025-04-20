@@ -2,17 +2,24 @@ import 'package:economia/core/observers/simple_bloc_observer.dart';
 import 'package:economia/core/routes/app_routes.dart';
 import 'package:economia/core/services/preferences.dart';
 import 'package:economia/data/blocs/card_bloc.dart';
+import 'package:economia/data/blocs/concept_bloc.dart';
 import 'package:economia/data/events/card_event.dart';
+import 'package:economia/data/events/concept_event.dart';
 import 'package:economia/data/repositories/card_repository.dart';
+import 'package:economia/data/repositories/concept_repository.dart';
 import 'package:economia/ui/themes/main_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Preferences.init();
+  await Preferences.init();
   Bloc.observer = SimpleBlocObserver();
+
+  initializeDateFormatting('es_MX', null);
 
   runApp(const MainApp());
 }
@@ -25,13 +32,31 @@ class MainApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<CardBloc>(
-          create: (context) => CardBloc(CardRepository())..add(LoadCardEvent()),
+          create:
+              (context) =>
+                  CardBloc(repository: CardRepository())..add(LoadCardEvent()),
+        ),
+        BlocProvider<ConceptBloc>(
+          create:
+              (context) =>
+                  ConceptBloc(repository: ConceptRepository())
+                    ..add(LoadConceptEvent()),
         ),
       ],
       child: MaterialApp.router(
         title: 'EconoMía',
         routerConfig: AppRoutes.getGoRoutes(navigatorKey),
         theme: MainTheme.lightTheme,
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: [
+          const Locale('es', 'MX'),
+          const Locale('en', 'US'),
+        ],
+        locale: const Locale('es', 'MX'),
       ),
     );
   }

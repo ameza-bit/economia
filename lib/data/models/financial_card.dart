@@ -58,4 +58,15 @@ class FinancialCard {
     'cardholderName': cardholderName,
     'cardNetwork': cardNetwork.index,
   };
+
+  // Agregar estos métodos para comparación
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is FinancialCard && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }

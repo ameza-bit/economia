@@ -17,7 +17,7 @@ void main() {
 
   setUp(() {
     mockCardRepository = MockCardRepository();
-    cardBloc = CardBloc(mockCardRepository);
+    cardBloc = CardBloc(repository: mockCardRepository);
   });
 
   tearDown(() {
