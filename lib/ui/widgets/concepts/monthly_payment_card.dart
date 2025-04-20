@@ -173,6 +173,9 @@ class MonthlyPaymentCard extends StatelessWidget {
     final paymentDateFormatted =
         '${payment.paymentDate.day}/${payment.paymentDate.month}/${payment.paymentDate.year}';
 
+    // Detectar si es un pago recurrente (ID negativo)
+    final bool isRecurringPayment = payment.concept.id < 0;
+
     return GestureDetector(
       onTap: () => _goToConceptDetail(context, payment.concept),
       child: Padding(
@@ -183,33 +186,72 @@ class MonthlyPaymentCard extends StatelessWidget {
             Expanded(
               child: Row(
                 children: [
-                  // Ícono de estado (pagado/pendiente)
+                  // Ícono de estado (pagado/pendiente/recurrente)
                   Icon(
-                    isPaid ? Icons.check_circle : Icons.schedule,
+                    isRecurringPayment
+                        ? Icons
+                            .repeat // Ícono especial para pagos recurrentes
+                        : (isPaid ? Icons.check_circle : Icons.schedule),
                     size: 16,
-                    color: isPaid ? Colors.green.shade700 : Colors.orange,
+                    color:
+                        isRecurringPayment
+                            ? Colors
+                                .purple // Color especial para pagos recurrentes
+                            : (isPaid ? Colors.green.shade700 : Colors.orange),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          payment.concept.name,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            // Texto tachado si está pagado
-                            decoration:
-                                isPaid ? TextDecoration.lineThrough : null,
-                            color: isPaid ? Colors.grey.shade600 : null,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                payment.concept.name,
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                  // Texto tachado si está pagado
+                                  decoration:
+                                      isPaid
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                  color: isPaid ? Colors.grey.shade600 : null,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            // Etiqueta para pagos recurrentes
+                            if (isRecurringPayment)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 2,
+                                ),
+                                margin: const EdgeInsets.only(left: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.purple.shade100,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Recurrente',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.purple.shade800,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                         Text(
-                          payment.concept.store,
+                          isRecurringPayment
+                              ? payment
+                                  .concept
+                                  .store // Proveedor para pagos recurrentes
+                              : payment.concept.store,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: Colors.grey.shade600),
                           maxLines: 1,
@@ -221,11 +263,18 @@ class MonthlyPaymentCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              payment.installmentText,
+                              isRecurringPayment
+                                  ? 'Pago periódico' // Texto para pagos recurrentes
+                                  : payment.installmentText,
                               style: Theme.of(
                                 context,
                               ).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.secondary,
+                                color:
+                                    isRecurringPayment
+                                        ? Colors.purple.shade700
+                                        : Theme.of(
+                                          context,
+                                        ).colorScheme.secondary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -238,7 +287,9 @@ class MonthlyPaymentCard extends StatelessWidget {
                                 color:
                                     isPaid
                                         ? Colors.green.shade700
-                                        : Colors.orange,
+                                        : (isRecurringPayment
+                                            ? Colors.purple.shade700
+                                            : Colors.orange),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -263,12 +314,24 @@ class MonthlyPaymentCard extends StatelessWidget {
       ),
     );
   }
-
   void _goToConceptDetail(BuildContext context, dynamic concept) {
-    context.goNamed(
-      ConceptFormScreen.routeName,
-      extra: {'concept': concept, 'isEditing': true},
-    );
+    // Detectar si es un pago recurrente (ID negativo)
+    if (concept.id < 0) {
+      // Aquí debería ir la lógica para abrir el detalle de un pago recurrente
+      // usando el ID real (sin el signo negativo)
+      String recurringPaymentId = concept.id.abs().toString();
+
+      // Buscar el pago recurrente por ID en el bloque
+      // (hay que obtener el pago real del bloque)
+      // Por ahora, solo navegamos a la lista de pagos recurrentes
+      context.goNamed('recurring_payment_list');
+    } else {
+      // Para conceptos normales, usar la navegación existente
+      context.goNamed(
+        ConceptFormScreen.routeName,
+        extra: {'concept': concept, 'isEditing': true},
+      );
+    }
   }
 
   // Método auxiliar para formatear montos
