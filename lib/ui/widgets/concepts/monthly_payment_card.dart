@@ -1,4 +1,6 @@
+import 'package:economia/data/blocs/concept_bloc.dart';
 import 'package:economia/data/blocs/recurring_payment_bloc.dart';
+import 'package:economia/data/events/concept_event.dart';
 import 'package:economia/data/models/monthly_payment.dart';
 import 'package:economia/data/models/recurring_payment.dart';
 import 'package:economia/data/states/recurring_payment_state.dart';
@@ -28,11 +30,19 @@ class MonthlyPaymentCard extends StatelessWidget {
     final now = DateTime.now();
     final paidPayments =
         monthlyPayment.payments
-            .where((payment) => payment.paymentDate.isBefore(now))
+            .where(
+              (payment) =>
+                  payment.paymentDate.isBefore(now) ||
+                  payment.concept.manuallyMarkedAsPaid,
+            )
             .toList();
     final pendingPayments =
         monthlyPayment.payments
-            .where((payment) => !payment.paymentDate.isBefore(now))
+            .where(
+              (payment) =>
+                  !payment.paymentDate.isBefore(now) &&
+                  !payment.concept.manuallyMarkedAsPaid,
+            )
             .toList();
 
     // Calcular montos totales por categoría
@@ -175,6 +185,9 @@ class MonthlyPaymentCard extends StatelessWidget {
     ConceptPayment payment, {
     bool isPaid = false,
   }) {
+    // Determinar si está pagado (manualmente o automáticamente)
+    final bool isPaidManually = payment.concept.manuallyMarkedAsPaid;
+
     // Formatear la fecha de pago
     final paymentDateFormatted =
         '${payment.paymentDate.day}/${payment.paymentDate.month}/${payment.paymentDate.year}';
@@ -183,7 +196,7 @@ class MonthlyPaymentCard extends StatelessWidget {
     final bool isRecurringPayment = payment.concept.id < 0;
 
     return GestureDetector(
-      onTap: () => _goToConceptDetail(context, payment.concept),
+      onTap: () => _showPaymentOptions(context, payment),
       child: Padding(
         padding: const EdgeInsets.only(bottom: 16.0),
         child: Row(
@@ -193,17 +206,45 @@ class MonthlyPaymentCard extends StatelessWidget {
               child: Row(
                 children: [
                   // Ícono de estado (pagado/pendiente/recurrente)
-                  Icon(
-                    isRecurringPayment
-                        ? Icons
-                            .repeat // Ícono especial para pagos recurrentes
-                        : (isPaid ? Icons.check_circle : Icons.schedule),
-                    size: 16,
-                    color:
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 4,
+                    children: [
+                      Icon(
                         isRecurringPayment
-                            ? Colors
-                                .purple // Color especial para pagos recurrentes
-                            : (isPaid ? Colors.green.shade700 : Colors.orange),
+                            ? Icons
+                                .repeat // Ícono especial para pagos recurrentes
+                            : (isPaid ? Icons.check_circle : Icons.schedule),
+                        size: 16,
+                        color:
+                            isRecurringPayment
+                                ? Colors
+                                    .purple // Color especial para pagos recurrentes
+                                : (isPaid
+                                    ? Colors.green.shade700
+                                    : Colors.orange),
+                      ),
+                      if (isPaidManually)
+                        Container(
+                          margin: EdgeInsets.only(right: 8),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade100,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Adelantado',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.green.shade800,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -335,9 +376,8 @@ class MonthlyPaymentCard extends StatelessWidget {
 
       if (state is LoadedRecurringPaymentState) {
         // Buscar el pago recurrente por ID
-        final RecurringPayment? payment = state.payments
-            .where((p) => p.id == recurringPaymentId)
-            .firstOrNull;
+        final RecurringPayment? payment =
+            state.payments.where((p) => p.id == recurringPaymentId).firstOrNull;
 
         if (payment != null) {
           // Navegar a la pantalla de edición del pago recurrente
@@ -369,6 +409,54 @@ class MonthlyPaymentCard extends StatelessWidget {
         extra: {'concept': concept, 'isEditing': true},
       );
     }
+  }
+
+  void _showPaymentOptions(BuildContext context, ConceptPayment payment) {
+    final bool isPaid =
+        payment.concept.manuallyMarkedAsPaid ||
+        payment.paymentDate.isBefore(DateTime.now());
+
+    showModalBottomSheet(
+      context: context,
+      builder:
+          (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.visibility),
+                  title: Text('Ver detalle'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _goToConceptDetail(context, payment.concept);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(
+                    isPaid ? Icons.unpublished : Icons.check_circle_outline,
+                    color: isPaid ? Colors.orange : Colors.green,
+                  ),
+                  title: Text(
+                    isPaid ? 'Marcar como no pagado' : 'Marcar como pagado',
+                    style: TextStyle(
+                      color: isPaid ? Colors.orange : Colors.green,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Llamar al bloc para cambiar el estado
+                    context.read<ConceptBloc>().add(
+                      ToggleConceptPaidStatusEvent(
+                        concept: payment.concept,
+                        isPaid: !isPaid,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+    );
   }
 
   // Método auxiliar para formatear montos

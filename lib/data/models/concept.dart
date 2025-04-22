@@ -10,7 +10,8 @@ class Concept {
   final FinancialCard card;
   final PaymentMode paymentMode;
   final int months;
-  final DateTime purchaseDate; // Nuevo campo
+  final DateTime purchaseDate;
+  final bool manuallyMarkedAsPaid;
 
   Concept({
     required this.id,
@@ -21,8 +22,9 @@ class Concept {
     required this.card,
     this.paymentMode = PaymentMode.oneTime,
     this.months = 1,
-    DateTime? purchaseDate, // Parámetro opcional
-  }) : purchaseDate = purchaseDate ?? DateTime.now(); // Valor por defecto
+    DateTime? purchaseDate,
+    this.manuallyMarkedAsPaid = false,
+  }) : purchaseDate = purchaseDate ?? DateTime.now();
 
   factory Concept.fromJson(Map<String, dynamic> json) {
     return Concept(
@@ -38,6 +40,7 @@ class Concept {
           json['purchaseDate'] != null
               ? DateTime.parse(json['purchaseDate'])
               : DateTime.now(),
+      manuallyMarkedAsPaid: json['manuallyMarkedAsPaid'] ?? false,
     );
   }
 
@@ -51,7 +54,34 @@ class Concept {
     'paymentMode': paymentMode.index,
     'months': months,
     'purchaseDate': purchaseDate.toIso8601String(),
+    'manuallyMarkedAsPaid': manuallyMarkedAsPaid,
   };
+
+  Concept copyWith({
+    int? id,
+    String? name,
+    String? description,
+    String? store,
+    double? total,
+    FinancialCard? card,
+    PaymentMode? paymentMode,
+    int? months,
+    DateTime? purchaseDate,
+    bool? manuallyMarkedAsPaid,
+  }) {
+    return Concept(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      store: store ?? this.store,
+      total: total ?? this.total,
+      card: card ?? this.card,
+      paymentMode: paymentMode ?? this.paymentMode,
+      months: months ?? this.months,
+      purchaseDate: purchaseDate ?? this.purchaseDate,
+      manuallyMarkedAsPaid: manuallyMarkedAsPaid ?? this.manuallyMarkedAsPaid,
+    );
+  }
 
   String get amount => "\$${total.toStringAsFixed(2)}";
 

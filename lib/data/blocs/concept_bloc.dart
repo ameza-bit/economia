@@ -11,6 +11,7 @@ class ConceptBloc extends Bloc<ConceptEvent, ConceptState> {
   ConceptBloc({required this.repository}) : super(InitialConceptState()) {
     on<LoadConceptEvent>(_onLoadConcepts);
     on<RefreshConceptEvent>(_onRefreshConcepts);
+    on<ToggleConceptPaidStatusEvent>(_onTogglePaidStatus);
   }
 
   void _onLoadConcepts(
@@ -36,6 +37,29 @@ class ConceptBloc extends Bloc<ConceptEvent, ConceptState> {
       emit(LoadedConceptState(_concepts));
     } catch (e) {
       emit(ErrorConceptState("Error loading concepts: $e"));
+    }
+  }
+
+  void _onTogglePaidStatus(
+    ToggleConceptPaidStatusEvent event,
+    Emitter<ConceptState> emit,
+  ) async {
+    try {
+      emit(LoadingConceptState());
+
+      // Crear una copia del concepto con el estado cambiado
+      final updatedConcept = event.concept.copyWith(
+        manuallyMarkedAsPaid: event.isPaid,
+      );
+
+      // Actualizar en el repositorio
+      repository.updateConceptLocal(updatedConcept);
+
+      // Recargar la lista completa
+      _concepts = repository.getConceptsLocal();
+      emit(LoadedConceptState(_concepts));
+    } catch (e) {
+      emit(ErrorConceptState("Error al actualizar el estado de pago: $e"));
     }
   }
 }

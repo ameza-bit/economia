@@ -180,4 +180,13 @@ class PaymentCalculator {
       return paidCount;
     }
   }
+
+  /// Calcula el total pagado de un concepto hasta la fecha actual
+  static bool isPaymentPaid(ConceptPayment payment) {
+    // Un pago está "pagado" si:
+    // - Está manualmente marcado como pagado, o
+    // - Su fecha de pago ya pasó (automáticamente)
+    return payment.concept.manuallyMarkedAsPaid ||
+        payment.paymentDate.isBefore(DateTime.now());
+  }
 }
