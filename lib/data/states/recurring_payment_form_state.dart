@@ -32,7 +32,7 @@ class RecurringPaymentFormReadyState extends RecurringPaymentFormState {
   final WeekDay? weekDay;
   final int weekDayOrdinal;
   final DateTime startDate;
-  final DateTime? endDate;
+  DateTime? endDate;
   final bool isActive;
   final String category;
 
@@ -88,5 +88,11 @@ class RecurringPaymentFormReadyState extends RecurringPaymentFormState {
       isActive: isActive ?? this.isActive,
       category: category ?? this.category,
     );
+  }
+
+  RecurringPaymentFormReadyState setEndDate(DateTime? endDate) {
+    RecurringPaymentFormReadyState copiedState = copyWith(endDate: endDate);
+    copiedState.endDate = endDate;
+    return copiedState;
   }
 }

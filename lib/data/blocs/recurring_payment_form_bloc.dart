@@ -190,7 +190,7 @@ class RecurringPaymentFormBloc
   ) {
     if (state is RecurringPaymentFormReadyState) {
       final currentState = state as RecurringPaymentFormReadyState;
-      emit(currentState.copyWith(endDate: event.endDate));
+      emit(currentState.setEndDate(event.endDate));
     }
   }
 
@@ -229,6 +229,7 @@ class RecurringPaymentFormBloc
           recurrenceType: event.payment.recurrenceType,
           paymentDateType: event.payment.paymentDateType,
           specificDay: event.payment.specificDay,
+          secondSpecificDay: event.payment.secondSpecificDay,
           weekDay: event.payment.weekDay,
           weekDayOrdinal: event.payment.weekDayOrdinal,
           startDate: event.payment.startDate,
