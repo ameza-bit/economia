@@ -10,3 +10,10 @@ class FilterRecurringPaymentByMonthEvent extends RecurringPaymentEvent {
 
   FilterRecurringPaymentByMonthEvent(this.year, this.month);
 }
+
+class ToggleRecurringPaymentDatePaidStatusEvent extends RecurringPaymentEvent {
+  final String paymentId;
+  final DateTime paymentDate;
+
+  ToggleRecurringPaymentDatePaidStatusEvent(this.paymentId, this.paymentDate);
+}

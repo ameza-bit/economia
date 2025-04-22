@@ -15,6 +15,7 @@ class RecurringPaymentBloc
     on<LoadRecurringPaymentEvent>(_onLoadPayments);
     on<RefreshRecurringPaymentEvent>(_onRefreshPayments);
     on<FilterRecurringPaymentByMonthEvent>(_onFilterByMonth);
+    on<ToggleRecurringPaymentDatePaidStatusEvent>(_onTogglePaidStatus);
   }
 
   void _onLoadPayments(
@@ -56,6 +57,46 @@ class RecurringPaymentBloc
       emit(LoadedRecurringPaymentState(filteredPayments));
     } catch (e) {
       emit(ErrorRecurringPaymentState("Error filtrando pagos recurrentes: $e"));
+    }
+  }
+
+  void _onTogglePaidStatus(
+    ToggleRecurringPaymentDatePaidStatusEvent event,
+    Emitter<RecurringPaymentState> emit,
+  ) async {
+    try {
+      emit(LoadingRecurringPaymentState());
+
+      // Obtener todos los pagos recurrentes
+      final payments = repository.getRecurringPaymentsLocal();
+
+      // Encontrar el pago específico
+      final paymentIndex = payments.indexWhere((p) => p.id == event.paymentId);
+
+      if (paymentIndex >= 0) {
+        // Obtener el pago
+        final payment = payments[paymentIndex];
+
+        // Crear una versión actualizada con el estado cambiado
+        final updatedPayment = payment.togglePaidStatus(event.paymentDate);
+
+        // Actualizar en la lista
+        payments[paymentIndex] = updatedPayment;
+
+        // Guardar la lista actualizada
+        repository.saveRecurringPaymentsLocal(payments);
+
+        // Actualizar _payments para mantener el estado interno actualizado
+        _payments = payments;
+      }
+
+      emit(LoadedRecurringPaymentState(_payments));
+    } catch (e) {
+      emit(
+        ErrorRecurringPaymentState(
+          "Error al actualizar el estado de pago recurrente: $e",
+        ),
+      );
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:economia/data/blocs/concept_bloc.dart';
 import 'package:economia/data/blocs/recurring_payment_bloc.dart';
 import 'package:economia/data/events/concept_event.dart';
+import 'package:economia/data/events/recurring_payment_event.dart';
 import 'package:economia/data/models/monthly_payment.dart';
 import 'package:economia/data/models/recurring_payment.dart';
 import 'package:economia/data/states/recurring_payment_state.dart';
@@ -185,9 +186,6 @@ class MonthlyPaymentCard extends StatelessWidget {
     ConceptPayment payment, {
     bool isPaid = false,
   }) {
-    // Determinar si está pagado (manualmente o automáticamente)
-    final bool isPaidManually = payment.concept.manuallyMarkedAsPaid;
-
     // Formatear la fecha de pago
     final paymentDateFormatted =
         '${payment.paymentDate.day}/${payment.paymentDate.month}/${payment.paymentDate.year}';
@@ -195,8 +193,49 @@ class MonthlyPaymentCard extends StatelessWidget {
     // Detectar si es un pago recurrente (ID negativo)
     final bool isRecurringPayment = payment.concept.id < 0;
 
+    // Variables para estados de pago
+    bool isManuallyMarked = false;
+    bool isAutomaticallyPaid = payment.paymentDate.isBefore(DateTime.now());
+
+    // Si es un pago recurrente, buscar el objeto RecurringPayment original
+    RecurringPayment? originalRecurringPayment;
+    if (isRecurringPayment) {
+      // Obtener el ID del pago recurrente (convertir de negativo a positivo)
+      final String recurringPaymentId = payment.concept.id.abs().toString();
+
+      // Obtener el bloc de pagos recurrentes
+      final recurringPaymentBloc = context.read<RecurringPaymentBloc>();
+
+      // Intentar encontrar el pago recurrente original
+      if (recurringPaymentBloc.state is LoadedRecurringPaymentState) {
+        final state = recurringPaymentBloc.state as LoadedRecurringPaymentState;
+        originalRecurringPayment =
+            state.payments.where((p) => p.id == recurringPaymentId).firstOrNull;
+      }
+
+      // Verificar si la fecha está marcada manualmente como pagada
+      if (originalRecurringPayment != null) {
+        isManuallyMarked = originalRecurringPayment.isDateMarkedAsPaid(
+          payment.paymentDate,
+        );
+        isPaid = isManuallyMarked || isAutomaticallyPaid;
+      }
+    } else {
+      // Para conceptos regulares
+      isManuallyMarked = payment.concept.manuallyMarkedAsPaid;
+      isPaid = isManuallyMarked || isAutomaticallyPaid;
+    }
+
     return GestureDetector(
-      onTap: () => _showPaymentOptions(context, payment),
+      onTap:
+          () =>
+              isRecurringPayment
+                  ? _showRecurringPaymentOptions(
+                    context,
+                    payment,
+                    originalRecurringPayment,
+                  )
+                  : _showPaymentOptions(context, payment),
       child: Padding(
         padding: const EdgeInsets.only(bottom: 16.0),
         child: Row(
@@ -213,19 +252,19 @@ class MonthlyPaymentCard extends StatelessWidget {
                     children: [
                       Icon(
                         isRecurringPayment
-                            ? Icons
-                                .repeat // Ícono especial para pagos recurrentes
+                            ? Icons.repeat
                             : (isPaid ? Icons.check_circle : Icons.schedule),
                         size: 16,
                         color:
                             isRecurringPayment
-                                ? Colors
-                                    .purple // Color especial para pagos recurrentes
+                                ? (isManuallyMarked
+                                    ? Colors.green.shade700
+                                    : Colors.purple)
                                 : (isPaid
                                     ? Colors.green.shade700
                                     : Colors.orange),
                       ),
-                      if (isPaidManually)
+                      if (isManuallyMarked)
                         Container(
                           margin: EdgeInsets.only(right: 8),
                           padding: EdgeInsets.symmetric(
@@ -449,6 +488,99 @@ class MonthlyPaymentCard extends StatelessWidget {
                       ToggleConceptPaidStatusEvent(
                         concept: payment.concept,
                         isPaid: !isPaid,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
+  void _showRecurringPaymentOptions(
+    BuildContext context,
+    ConceptPayment payment,
+    RecurringPayment? originalPayment,
+  ) {
+    if (originalPayment == null) {
+      // Si no podemos encontrar el pago recurrente original, mostrar opciones limitadas
+      showModalBottomSheet(
+        context: context,
+        builder:
+            (context) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.visibility),
+                  title: Text('Ver detalle'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _goToConceptDetail(context, payment.concept);
+                  },
+                ),
+              ],
+            ),
+      );
+      return;
+    }
+
+    // Verificar si la fecha está marcada como pagada
+    final bool isMarkedPaid = originalPayment.isDateMarkedAsPaid(
+      payment.paymentDate,
+    );
+    final bool isAutomaticallyPaid = payment.paymentDate.isBefore(
+      DateTime.now(),
+    );
+    final bool isEffectivelyPaid = isMarkedPaid || isAutomaticallyPaid;
+
+    showModalBottomSheet(
+      context: context,
+      builder:
+          (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.visibility),
+                  title: Text('Ver detalle'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _goToConceptDetail(context, payment.concept);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(
+                    isEffectivelyPaid
+                        ? Icons.unpublished
+                        : Icons.check_circle_outline,
+                    color: isEffectivelyPaid ? Colors.orange : Colors.green,
+                  ),
+                  title: Text(
+                    isMarkedPaid
+                        ? 'Desmarcar como pagado'
+                        : (isAutomaticallyPaid
+                            ? 'Confirmar como pagado'
+                            : 'Marcar como pagado'),
+                    style: TextStyle(
+                      color: isEffectivelyPaid ? Colors.orange : Colors.green,
+                    ),
+                  ),
+                  subtitle: Text(
+                    isMarkedPaid
+                        ? 'Pago marcado manualmente'
+                        : (isAutomaticallyPaid
+                            ? 'Pago considerado automáticamente'
+                            : 'Pendiente de pago'),
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Llamar al bloc para cambiar el estado
+                    context.read<RecurringPaymentBloc>().add(
+                      ToggleRecurringPaymentDatePaidStatusEvent(
+                        originalPayment.id,
+                        payment.paymentDate,
                       ),
                     );
                   },

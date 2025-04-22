@@ -1,7 +1,9 @@
 // lib/ui/widgets/recurring_payments/recurring_payment_item.dart
+import 'package:economia/data/blocs/recurring_payment_bloc.dart';
 import 'package:economia/data/blocs/recurring_payment_form_bloc.dart';
 import 'package:economia/data/enums/payment_date_type.dart';
 import 'package:economia/data/enums/recurrence_type.dart';
+import 'package:economia/data/events/recurring_payment_event.dart';
 import 'package:economia/data/events/recurring_payment_form_event.dart';
 import 'package:economia/data/models/recurring_payment.dart';
 import 'package:economia/data/repositories/card_repository.dart';
@@ -11,6 +13,7 @@ import 'package:economia/data/states/recurring_payment_form_state.dart';
 import 'package:economia/ui/screens/recurring_payments/recurring_payment_form_screen.dart';
 import 'package:economia/ui/widgets/general/general_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
@@ -440,6 +443,15 @@ class RecurringPaymentItem extends StatelessWidget {
                 },
               ),
               ListTile(
+                leading: Icon(Icons.calendar_month, color: Colors.blue),
+                title: Text('Gestionar fechas de pago'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showUpcomingPaymentDates(context);
+                },
+              ),
+
+              ListTile(
                 leading: Icon(Icons.delete, color: Colors.red),
                 title: Text(
                   'Eliminar pago recurrente',
@@ -525,6 +537,81 @@ class RecurringPaymentItem extends StatelessWidget {
                   );
                 },
                 child: Text('Eliminar'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _showUpcomingPaymentDates(BuildContext context) {
+    // Calcular las próximas 5 fechas de pago
+    final nextPaymentDates =
+        RecurringPaymentCalculator.calculateNextNPaymentDates(payment, 5);
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Próximos pagos'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: nextPaymentDates.length,
+                itemBuilder: (context, index) {
+                  final date = nextPaymentDates[index];
+                  final formattedDate = DateFormat(
+                    'dd/MM/yyyy',
+                    'es_MX',
+                  ).format(date);
+                  final isPastDue = date.isBefore(DateTime.now());
+                  final isMarkedPaid = payment.isDateMarkedAsPaid(date);
+
+                  return ListTile(
+                    leading: Icon(
+                      isMarkedPaid
+                          ? Icons.check_circle
+                          : (isPastDue ? Icons.warning : Icons.schedule),
+                      color:
+                          isMarkedPaid
+                              ? Colors.green
+                              : (isPastDue ? Colors.orange : Colors.blue),
+                    ),
+                    title: Text(formattedDate),
+                    subtitle: Text(
+                      isMarkedPaid
+                          ? 'Marcado como pagado'
+                          : (isPastDue ? 'Vencido' : 'Pendiente'),
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(
+                        isMarkedPaid
+                            ? Icons.unpublished
+                            : Icons.check_circle_outline,
+                        color: isMarkedPaid ? Colors.orange : Colors.green,
+                      ),
+                      onPressed: () {
+                        // Llamar al bloc para cambiar el estado
+                        context.read<RecurringPaymentBloc>().add(
+                          ToggleRecurringPaymentDatePaidStatusEvent(
+                            payment.id,
+                            date,
+                          ),
+                        );
+
+                        // Refrescar el diálogo (cerrando y reabriendo)
+                        Navigator.pop(context);
+                        _showUpcomingPaymentDates(context);
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cerrar'),
               ),
             ],
           ),

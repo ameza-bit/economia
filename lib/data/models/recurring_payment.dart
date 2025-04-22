@@ -22,6 +22,7 @@ class RecurringPayment {
   final bool isActive;
   final String category;
   final DateTime nextPaymentDate;
+  final List<DateTime> manuallyMarkedPayments;
 
   RecurringPayment({
     required this.id,
@@ -41,6 +42,7 @@ class RecurringPayment {
     this.isActive = true,
     this.category = 'General',
     DateTime? nextPaymentDate,
+    this.manuallyMarkedPayments = const [],
   }) : nextPaymentDate = nextPaymentDate ?? startDate;
 
   factory RecurringPayment.fromJson(Map<String, dynamic> json) {
@@ -64,6 +66,11 @@ class RecurringPayment {
       category: json['category'] ?? 'General',
       nextPaymentDate:
           DateTime.tryParse(json['nextPaymentDate'] ?? '') ?? DateTime.now(),
+      manuallyMarkedPayments:
+          (json['manuallyMarkedPayments'] as List<dynamic>?)
+              ?.map((e) => DateTime.parse(e.toString()))
+              .toList() ??
+          [],
     );
   }
 
@@ -85,6 +92,8 @@ class RecurringPayment {
     'isActive': isActive,
     'category': category,
     'nextPaymentDate': nextPaymentDate.toIso8601String(),
+    'manuallyMarkedPayments':
+        manuallyMarkedPayments.map((e) => e.toIso8601String()).toList(),
   };
 
   // Copia con posibilidad de modificar valores
@@ -106,6 +115,7 @@ class RecurringPayment {
     bool? isActive,
     String? category,
     DateTime? nextPaymentDate,
+    List<DateTime>? manuallyMarkedPayments,
   }) {
     return RecurringPayment(
       id: id ?? this.id,
@@ -126,6 +136,8 @@ class RecurringPayment {
       isActive: isActive ?? this.isActive,
       category: category ?? this.category,
       nextPaymentDate: nextPaymentDate ?? this.nextPaymentDate,
+      manuallyMarkedPayments:
+          manuallyMarkedPayments ?? this.manuallyMarkedPayments,
     );
   }
 
@@ -189,5 +201,43 @@ class RecurringPayment {
       default:
         return '$weekDayOrdinal°';
     }
+  }
+
+  // Método para verificar si una fecha específica está marcada como pagada
+  bool isDateMarkedAsPaid(DateTime date) {
+    // Compara solo año, mes y día, ignorando horas y minutos
+    return manuallyMarkedPayments.any(
+      (markedDate) =>
+          markedDate.year == date.year &&
+          markedDate.month == date.month &&
+          markedDate.day == date.day,
+    );
+  }
+
+  // Método para alternar el estado pagado/no pagado de una fecha específica
+  RecurringPayment togglePaidStatus(DateTime date) {
+    // Normalizar la fecha (solo año, mes, día)
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+
+    // Crear una copia de la lista de pagos marcados
+    final updatedMarkedPayments = List<DateTime>.from(manuallyMarkedPayments);
+
+    // Verificar si la fecha ya está marcada
+    final existingIndex = updatedMarkedPayments.indexWhere(
+      (markedDate) =>
+          markedDate.year == normalizedDate.year &&
+          markedDate.month == normalizedDate.month &&
+          markedDate.day == normalizedDate.day,
+    );
+
+    // Si está marcada, desmarcar; si no, marcar
+    if (existingIndex >= 0) {
+      updatedMarkedPayments.removeAt(existingIndex);
+    } else {
+      updatedMarkedPayments.add(normalizedDate);
+    }
+
+    // Retornar una nueva instancia con la lista actualizada
+    return copyWith(manuallyMarkedPayments: updatedMarkedPayments);
   }
 }

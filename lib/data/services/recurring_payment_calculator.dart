@@ -321,8 +321,32 @@ class RecurringPaymentCalculator {
       now,
     );
 
-    // Contar cuántos pagos han pasado (son anteriores a la fecha actual)
-    return paymentDates.where((date) => date.isBefore(now)).length;
+    // Contar pagos vencidos más los marcados manualmente como pagados
+    int count = 0;
+
+    for (final date in paymentDates) {
+      // Contar si la fecha está en el pasado o está marcada manualmente
+      if (date.isBefore(now) || payment.isDateMarkedAsPaid(date)) {
+        count++;
+      }
+    }
+
+    // Añadir fechas futuras marcadas como pagadas
+    if (payment.endDate != null && payment.endDate!.isAfter(now)) {
+      final futureDates = calculatePaymentDatesForPeriod(
+        payment,
+        now,
+        payment.endDate!,
+      );
+
+      for (final date in futureDates) {
+        if (payment.isDateMarkedAsPaid(date)) {
+          count++;
+        }
+      }
+    }
+
+    return count;
   }
 
   // Método para calcular el número total de pagos esperados
@@ -340,5 +364,21 @@ class RecurringPaymentCalculator {
     );
 
     return paymentDates.length;
+  }
+
+  /// Metodo para verificar si una fecha de pago está marcada como pagada
+  /// o si la fecha ya pasó automáticamente.
+  /// Un pago está considerado "pagado" si:
+  /// 1. Está manualmente marcado como pagado, o
+  /// 2. La fecha ya pasó (automáticamente)
+  static bool isPaymentDatePaid(
+    RecurringPayment payment,
+    DateTime paymentDate,
+  ) {
+    // Un pago está considerado "pagado" si:
+    // 1. Está manualmente marcado como pagado, o
+    // 2. La fecha ya pasó (automáticamente)
+    return payment.isDateMarkedAsPaid(paymentDate) ||
+        paymentDate.isBefore(DateTime.now());
   }
 }
